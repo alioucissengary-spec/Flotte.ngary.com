@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="FLOTTE 2.0 — CRM gestion de flotte VTC Yango, versements, dépenses, chauffeurs, véhicules">
+<title>FLOTTE 2.0 — Gestion de Flotte VTC</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ===== RESET ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px;scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:#080e1f;color:#e8edf8;line-height:1.6;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button{font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:'Plus Jakarta Sans',sans-serif}
+ul{list-style:none}
+img{max-width:100%;display:block}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:#0d1528}
+::-webkit-scrollbar-thumb{background:#253048;border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:#3b6bcc}
+
+/* ===== CSS VARIABLES ===== */
+:root{
+  --bg-main:#080e1f;
+  --bg-card:#0d1528;
+  --bg-card2:#111d35;
+  --bg-hover:#162040;
+  --border:#1e2d4a;
+  --border2:#253048;
+  --text-1:#e8edf8;
+  --text-2:#8fa3c8;
+  --text-3:#4d6188;
+  --blue:#3b6bcc;
+  --blue-light:#5a8af0;
+  --cyan:#00d4ff;
+  --green:#10c97a;
+  --amber:#f5a623;
+  --red:#ef4545;
+  --purple:#8b5cf6;
+  --pink:#ec4899;
+  --sidebar-w:252px;
+  --sidebar-c:68px;
+  --header-h:60px;
+  --r-sm:6px;
+  --r-md:10px;
+  --r-lg:14px;
+  --r-xl:20px;
+  --shadow:0 4px 24px rgba(0,0,0,.4);
+  --shadow-sm:0 2px 8px rgba(0,0,0,.3);
+  --glow:0 0 24px rgba(59,107,204,.2);
+  --tr:.18s cubic-bezier(.4,0,.2,1);
+}
+
+/* ===== AUTH ===== */
+#auth-screen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;
+  background:var(--bg-main);position:relative;overflow:hidden;
+}
+#auth-screen::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 60% at 20% 30%,rgba(59,107,204,.18) 0%,transparent 65%),
+             radial-gradient(ellipse 50% 50% at 80% 70%,rgba(0,212,255,.07) 0%,transparent 60%);
+}
+.auth-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:50px 50px;
+}
+.auth-box{
+  position:relative;z-index:1;width:100%;max-width:420px;margin:20px;
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-xl);
+  padding:42px 40px;box-shadow:var(--shadow),var(--glow);
+}
+.auth-logo{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+.auth-logo-ico{
+  width:42px;height:42px;border-radius:11px;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+}
+.auth-logo-txt{font-size:20px;font-weight:800;letter-spacing:-.5px}
+.auth-logo-txt span{color:var(--cyan)}
+.auth-h1{font-size:24px;font-weight:700;margin-bottom:6px;letter-spacing:-.4px}
+.auth-sub{color:var(--text-2);font-size:13.5px;margin-bottom:28px}
+.lbl{display:block;font-size:12.5px;font-weight:600;color:var(--text-2);margin-bottom:7px;letter-spacing:.3px}
+.inp{
+  width:100%;background:var(--bg-card2);border:1px solid var(--border2);
+  border-radius:var(--r-md);color:var(--text-1);font-size:14px;
+  padding:11px 15px;outline:none;transition:var(--tr);
+}
+.inp:focus{border-color:var(--blue);background:var(--bg-hover);box-shadow:0 0 0 3px rgba(59,107,204,.15)}
+.inp::placeholder{color:var(--text-3)}
+.inp-wrap{position:relative;margin-bottom:18px}
+.inp-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none}
+.inp-wrap .inp{padding-left:40px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-size:13.5px;font-weight:600;padding:10px 20px;border-radius:var(--r-md);
+  border:none;cursor:pointer;transition:var(--tr);white-space:nowrap;
+}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:linear-gradient(135deg,var(--blue),#2a55b0);color:#fff;box-shadow:0 4px 14px rgba(59,107,204,.3)}
+.btn-primary:hover{box-shadow:0 6px 20px rgba(59,107,204,.45)}
+.btn-success{background:linear-gradient(135deg,var(--green),#0a9e5e);color:#fff}
+.btn-danger{background:linear-gradient(135deg,var(--red),#c53030);color:#fff}
+.btn-ghost{background:transparent;color:var(--text-2);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--border);color:var(--text-1);background:var(--bg-hover)}
+.btn-accent{background:linear-gradient(135deg,var(--cyan),#009ec0);color:#080e1f;font-weight:700}
+.btn-sm{font-size:12px;padding:7px 13px}
+.btn-lg{font-size:15px;padding:13px 26px;border-radius:var(--r-lg)}
+.btn-block{width:100%}
+.btn-icon{padding:8px;border-radius:var(--r-md)}
+.fg{margin-bottom:18px}
+
+/* ===== APP LAYOUT ===== */
+#app-screen{display:flex;min-height:100vh}
+#app-screen.hidden,#auth-screen.hidden{display:none}
+
+/* ===== SIDEBAR ===== */
+#sidebar{
+  width:var(--sidebar-w);background:var(--bg-card);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;height:100vh;
+  z-index:100;transition:width var(--tr);overflow:hidden;
+}
+#sidebar.collapsed{width:var(--sidebar-c)}
+.sb-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 14px;border-bottom:1px solid var(--border);
+  min-height:60px;flex-shrink:0;
+}
+.sb-logo{display:flex;align-items:center;gap:10px;overflow:hidden}
+.logo-ico{
+  width:34px;height:34px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.logo-txt{font-size:16px;font-weight:800;white-space:nowrap;opacity:1;transition:opacity var(--tr)}
+.logo-txt span{color:var(--cyan)}
+#sidebar.collapsed .logo-txt{opacity:0;width:0}
+.sb-toggle{
+  width:26px;height:26px;background:var(--bg-card2);border:1px solid var(--border2);
+  border-radius:6px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--text-2);transition:var(--tr);flex-shrink:0;font-size:13px;
+}
+.sb-toggle:hover{background:var(--bg-hover);color:var(--text-1)}
+#sidebar.collapsed .sb-toggle{margin:0 auto}
+.sb-nav{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px 0}
+.nav-sec{margin-bottom:2px}
+.nav-sec-lbl{
+  font-size:10px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;
+  color:var(--text-3);padding:8px 18px 4px;white-space:nowrap;
+  opacity:1;transition:opacity var(--tr);
+}
+#sidebar.collapsed .nav-sec-lbl{opacity:0}
+.ni{
+  display:flex;align-items:center;gap:10px;padding:9px 12px;
+  margin:2px 7px;border-radius:var(--r-md);color:var(--text-2);
+  cursor:pointer;transition:var(--tr);position:relative;white-space:nowrap;overflow:hidden;
+}
+.ni:hover{background:var(--bg-card2);color:var(--text-1)}
+.ni.active{
+  background:linear-gradient(135deg,rgba(59,107,204,.22),rgba(0,212,255,.08));
+  color:#7aadf5;border:1px solid rgba(59,107,204,.25);
+}
+.ni.active::before{
+  content:'';position:absolute;left:-7px;top:50%;transform:translateY(-50%);
+  width:3px;height:18px;background:var(--cyan);border-radius:0 3px 3px 0;
+}
+.ni-ico{font-size:17px;flex-shrink:0;width:22px;text-align:center}
+.ni-lbl{font-size:13px;font-weight:500;flex:1;opacity:1;transition:opacity var(--tr)}
+#sidebar.collapsed .ni-lbl{opacity:0;width:0}
+.ni-badge{
+  background:var(--red);color:#fff;font-size:10px;font-weight:700;
+  padding:2px 6px;border-radius:20px;min-width:18px;text-align:center;flex-shrink:0;
+}
+#sidebar.collapsed .ni-badge{display:none}
+.sb-foot{border-top:1px solid var(--border);padding:10px;flex-shrink:0}
+.user-card{
+  display:flex;align-items:center;gap:9px;padding:9px;
+  border-radius:var(--r-md);cursor:pointer;transition:var(--tr);overflow:hidden;
+}
+.user-card:hover{background:var(--bg-card2)}
+.u-av{
+  width:32px;height:32px;border-radius:50%;flex-shrink:0;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;
+}
+.u-inf{overflow:hidden;transition:opacity var(--tr)}
+.u-name{font-size:12.5px;font-weight:600;white-space:nowrap}
+.u-role{font-size:11px;color:var(--text-3);white-space:nowrap}
+#sidebar.collapsed .u-inf{opacity:0;width:0}
+
+/* ===== MAIN ===== */
+#main{flex:1;margin-left:var(--sidebar-w);display:flex;flex-direction:column;min-height:100vh;transition:margin-left var(--tr)}
+#main.collapsed{margin-left:var(--sidebar-c)}
+
+/* ===== HEADER ===== */
+#header{
+  background:var(--bg-card);border-bottom:1px solid var(--border);
+  height:var(--header-h);display:flex;align-items:center;
+  justify-content:space-between;padding:0 22px;
+  position:sticky;top:0;z-index:50;
+}
+.hdr-l{display:flex;align-items:center;gap:14px}
+#page-title{font-size:17px;font-weight:700;letter-spacing:-.3px}
+.hdr-r{display:flex;align-items:center;gap:8px}
+.hbtn{
+  width:36px;height:36px;background:var(--bg-card2);border:1px solid var(--border);
+  border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--text-2);transition:var(--tr);position:relative;font-size:15px;
+}
+.hbtn:hover{background:var(--bg-hover);color:var(--text-1)}
+.notif-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;background:var(--red);border-radius:50%;border:2px solid var(--bg-card)}
+
+/* ===== PAGE CONTENT ===== */
+#page{flex:1;padding:22px;max-width:1600px;width:100%;margin:0 auto}
+.page-anim{animation:fadeUp .28s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ===== CARDS ===== */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;transition:border-color var(--tr)}
+.card:hover{border-color:var(--border2)}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.card-title{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}
+.card-body{padding:20px}
+.card-foot{padding:12px 20px;border-top:1px solid var(--border);background:rgba(0,0,0,.1)}
+.card-accent{border-color:rgba(59,107,204,.3);background:linear-gradient(135deg,rgba(59,107,204,.06),rgba(0,212,255,.03))}
+
+/* ===== STATS GRID ===== */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px}
+.stat-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:20px;position:relative;
+  overflow:hidden;transition:var(--tr);
+}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--sc,var(--blue))}
+.stat-card:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+.stat-ico{width:42px;height:42px;border-radius:var(--r-md);background:var(--sb,rgba(59,107,204,.12));color:var(--sc,var(--blue-light));display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:13px}
+.stat-val{font-size:26px;font-weight:800;letter-spacing:-1px;line-height:1;margin-bottom:5px;font-variant-numeric:tabular-nums}
+.stat-lbl{font-size:12px;color:var(--text-2);font-weight:500;letter-spacing:.2px}
+.stat-trend{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:20px;margin-top:9px}
+.trend-up{background:rgba(16,201,122,.12);color:#34d399}
+.trend-dn{background:rgba(239,69,69,.12);color:#f87171}
+
+/* ===== TABLE ===== */
+.tbl-wrap{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:10px 14px;font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-3);background:var(--bg-card2);white-space:nowrap}
+.tbl th:first-child{border-radius:6px 0 0 6px}
+.tbl th:last-child{border-radius:0 6px 6px 0}
+.tbl td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--text-2);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.018)}
+
+/* ===== BADGES ===== */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.b-green{background:rgba(16,201,122,.12);color:#34d399;border:1px solid rgba(16,201,122,.2)}
+.b-amber{background:rgba(245,166,35,.12);color:#fbbf24;border:1px solid rgba(245,166,35,.2)}
+.b-red{background:rgba(239,69,69,.12);color:#f87171;border:1px solid rgba(239,69,69,.2)}
+.b-blue{background:rgba(59,107,204,.12);color:#7aadf5;border:1px solid rgba(59,107,204,.2)}
+.b-gray{background:rgba(143,163,200,.1);color:#8fa3c8;border:1px solid rgba(143,163,200,.15)}
+.b-cyan{background:rgba(0,212,255,.1);color:#33d4ff;border:1px solid rgba(0,212,255,.2)}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dot-g{background:var(--green);box-shadow:0 0 5px var(--green)}
+.dot-a{background:var(--amber);box-shadow:0 0 5px var(--amber)}
+.dot-r{background:var(--red);box-shadow:0 0 5px var(--red)}
+.dot-x{background:var(--text-3)}
+
+/* ===== FORM ===== */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+select.inp{appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' viewBox='0 0 24 24' stroke='%234d6188' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+
+/* ===== SEARCH ===== */
+.search-wrap{position:relative;flex:1;max-width:300px}
+.search-wrap input{width:100%;background:var(--bg-card2);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text-1);font-size:13px;padding:8px 13px 8px 36px;outline:none;transition:var(--tr)}
+.search-wrap input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,107,204,.1)}
+.search-wrap::before{content:'🔍';position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none}
+
+/* ===== MODAL ===== */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity var(--tr)}
+.overlay.show{opacity:1;pointer-events:all}
+.modal{background:var(--bg-card);border:1px solid var(--border2);border-radius:var(--r-xl);width:100%;max-width:540px;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow);transform:scale(.95) translateY(8px);transition:transform var(--tr)}
+.overlay.show .modal{transform:scale(1) translateY(0)}
+.modal.modal-lg{max-width:720px}
+.m-head{display:flex;align-items:center;justify-content:space-between;padding:20px 22px;border-bottom:1px solid var(--border)}
+.m-title{font-size:16px;font-weight:700;letter-spacing:-.3px}
+.m-close{width:30px;height:30px;background:var(--bg-card2);border:1px solid var(--border);border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-3);transition:var(--tr);font-size:16px}
+.m-close:hover{background:var(--bg-hover);color:var(--text-1)}
+.m-body{padding:22px}
+.m-foot{display:flex;justify-content:flex-end;gap:9px;padding:14px 22px;border-top:1px solid var(--border);background:rgba(0,0,0,.08)}
+
+/* ===== TABS ===== */
+.tabs{display:flex;gap:2px;background:var(--bg-card2);padding:3px;border-radius:var(--r-md);border:1px solid var(--border)}
+.tab{flex:1;padding:7px 14px;font-size:12.5px;font-weight:500;color:var(--text-3);border-radius:7px;cursor:pointer;transition:var(--tr);text-align:center;white-space:nowrap}
+.tab.active{background:var(--bg-hover);color:var(--text-1)}
+.tab:hover:not(.active){color:var(--text-2)}
+
+/* ===== ALERTS ===== */
+.alert{display:flex;align-items:flex-start;gap:11px;padding:13px 15px;border-radius:var(--r-md);font-size:13px;border-left:3px solid}
+.al-green{background:rgba(16,201,122,.08);border-color:var(--green);color:#6ee7b7}
+.al-amber{background:rgba(245,166,35,.08);border-color:var(--amber);color:#fcd34d}
+.al-red{background:rgba(239,69,69,.08);border-color:var(--red);color:#fca5a5}
+.al-blue{background:rgba(59,107,204,.08);border-color:var(--blue);color:#93c5fd}
+
+/* ===== PROGRESS ===== */
+.prog{height:5px;background:var(--bg-hover);border-radius:20px;overflow:hidden}
+.prog-bar{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .5s ease}
+
+/* ===== AVATAR ===== */
+.av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+
+/* ===== TOAST ===== */
+#toasts{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:9px;pointer-events:none}
+.toast{
+  display:flex;align-items:center;gap:11px;background:var(--bg-card2);
+  border:1px solid var(--border2);border-radius:var(--r-lg);
+  padding:13px 16px;min-width:280px;max-width:380px;
+  box-shadow:var(--shadow);pointer-events:all;
+  animation:slideIn .28s ease;
+}
+@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast-msg{font-size:13px;flex:1}
+.toast-x{color:var(--text-3);font-size:16px;cursor:pointer;padding:2px 6px;transition:color var(--tr)}
+.toast-x:hover{color:var(--text-1)}
+
+/* ===== MAP PLACEHOLDER ===== */
+.map-box{background:var(--bg-card2);border-radius:var(--r-lg);height:380px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border:1px solid var(--border)}
+.map-pulse{width:56px;height:56px;border-radius:50%;background:rgba(0,212,255,.15);display:flex;align-items:center;justify-content:center;font-size:26px;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(0,212,255,.35)}50%{transform:scale(1.06);box-shadow:0 0 0 12px rgba(0,212,255,0)}}
+
+/* ===== CHAT ===== */
+.chat-win{display:flex;flex-direction:column;height:480px;background:var(--bg-card2);border-radius:var(--r-lg);border:1px solid var(--border);overflow:hidden}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.chat-msg{display:flex;gap:9px;max-width:82%}
+.chat-msg.user{flex-direction:row-reverse;align-self:flex-end}
+.bubble{padding:9px 13px;border-radius:12px;font-size:13px;line-height:1.5}
+.chat-msg.bot .bubble{background:var(--bg-hover);color:var(--text-1);border-radius:3px 12px 12px 12px}
+.chat-msg.user .bubble{background:linear-gradient(135deg,var(--blue),#2a55b0);color:#fff;border-radius:12px 3px 12px 12px}
+.chat-in{display:flex;gap:9px;padding:11px 14px;border-top:1px solid var(--border);background:var(--bg-card)}
+.chat-inp{flex:1;background:var(--bg-card2);border:1px solid var(--border);border-radius:20px;color:var(--text-1);font-size:13px;padding:9px 16px;outline:none;transition:var(--tr)}
+.chat-inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,107,204,.1)}
+
+/* ===== TIMELINE ===== */
+.timeline{position:relative;padding-left:22px}
+.timeline::before{content:'';position:absolute;left:6px;top:8px;bottom:8px;width:1.5px;background:var(--border2)}
+.tl-item{position:relative;padding-bottom:18px}
+.tl-dot{position:absolute;left:-20px;top:3px;width:12px;height:12px;border-radius:50%;background:var(--blue);border:2px solid var(--bg-card);z-index:1}
+.tl-time{font-size:11px;color:var(--text-3);font-weight:500;margin-bottom:3px}
+.tl-txt{font-size:13px;color:var(--text-2)}
+
+/* ===== VEHICLE CARD ===== */
+.v-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;transition:var(--tr)}
+.v-card:hover{border-color:rgba(59,107,204,.4);box-shadow:var(--glow);transform:translateY(-2px)}
+.v-img{height:140px;background:linear-gradient(135deg,var(--bg-card2),var(--bg-hover));display:flex;align-items:center;justify-content:center;font-size:52px;position:relative}
+.v-info{padding:15px}
+.v-plate{font-family:'JetBrains Mono',monospace;font-size:13.5px;font-weight:600;background:var(--bg-card2);border:1px solid var(--border2);padding:3px 9px;border-radius:5px;display:inline-block;margin-bottom:7px;letter-spacing:.8px}
+
+/* ===== GRID UTILS ===== */
+.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.flex{display:flex}.fc{flex-direction:column}.fw{flex-wrap:wrap}
+.ai{align-items:center}.jb{justify-content:space-between}.je{justify-content:flex-end}
+.gap6{gap:6px}.gap8{gap:8px}.gap10{gap:10px}.gap12{gap:12px}.gap16{gap:16px}.gap20{gap:20px}
+.mb4{margin-bottom:4px}.mb8{margin-bottom:8px}.mb12{margin-bottom:12px}.mb16{margin-bottom:16px}.mb20{margin-bottom:20px}.mb24{margin-bottom:24px}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mt16{margin-top:16px}.mt20{margin-top:20px}
+.p12{padding:12px}.p16{padding:16px}.p20{padding:20px}
+.wfull{width:100%}
+.c2{color:var(--text-2)}.c3{color:var(--text-3)}
+.fw5{font-weight:500}.fw6{font-weight:600}.fw7{font-weight:700}.fw8{font-weight:800}
+.fs11{font-size:11px}.fs12{font-size:12px}.fs13{font-size:13px}.fs14{font-size:14px}.fs16{font-size:16px}.fs18{font-size:18px}.fs22{font-size:22px}
+.mono{font-family:'JetBrains Mono',monospace}
+.tc-green{color:var(--green)}.tc-amber{color:var(--amber)}.tc-red{color:var(--red)}.tc-cyan{color:var(--cyan)}.tc-blue{color:var(--blue-light)}
+.divider{height:1px;background:var(--border);margin:14px 0}
+.sec-title{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--text-1)}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 20px;text-align:center;gap:10px}
+.empty-ico{font-size:44px;opacity:.3}
+
+/* ===== TOGGLE SWITCH ===== */
+.toggle-wrap{position:relative;width:40px;height:22px;flex-shrink:0;cursor:pointer}
+.toggle-inp{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;z-index:1}
+.toggle-track{position:absolute;inset:0;background:var(--border2);border-radius:11px;transition:.2s}
+.toggle-inp:checked~.toggle-track{background:var(--blue)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:.2s;pointer-events:none}
+.toggle-inp:checked~.toggle-thumb{left:21px}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:900px){
+  #sidebar{transform:translateX(-100%)}
+  #sidebar.mob-open{transform:translateX(0)}
+  #main{margin-left:0!important}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .form-row{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  #page{padding:14px}
+  .stats-grid{grid-template-columns:1fr}
+  .auth-box{padding:28px 20px}
+  .hdr-r .btn-ghost{display:none}
+}
+@media print{#sidebar,#header,.btn,.overlay{display:none!important}#main{margin-left:0!important}}
+</style>
+</head>
+<body>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div id="toasts"></div>
+
+<!-- ===== AUTH SCREEN ===== -->
+<div id="auth-screen">
+  <div class="auth-grid"></div>
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="auth-logo-ico">🚗</div>
+      <div class="auth-logo-txt">FLOTTE <span>2.0</span></div>
+    </div>
+    <h1 class="auth-h1">Bienvenue</h1>
+    <p class="auth-sub">Connectez-vous à votre espace de gestion</p>
+    <div class="fg">
+      <label class="lbl">Adresse email</label>
+      <div class="inp-wrap">
+        <span class="inp-ico">📧</span>
+        <input type="email" class="inp" id="l-email" placeholder="votre@email.com" value="admin@ngary.com">
+      </div>
+    </div>
+    <div class="fg">
+      <label class="lbl">Mot de passe</label>
+      <div class="inp-wrap">
+        <span class="inp-ico">🔒</span>
+        <input type="password" class="inp" id="l-pass" placeholder="••••••••" value="admin2024">
+      </div>
+    </div>
+    <div class="flex ai jb mb20 fs13">
+      <label class="flex ai gap8" style="cursor:pointer"><input type="checkbox" checked style="accent-color:var(--blue)"><span class="c2">Se souvenir</span></label>
+      <span style="color:var(--cyan);cursor:pointer">Mot de passe oublié ?</span>
+    </div>
+    <button class="btn btn-primary btn-lg btn-block" onclick="doLogin()">Se connecter →</button>
+    <p class="fs12 c3 mt12" style="text-align:center">Plateforme sécurisée · ngary.com</p>
+  </div>
+</div>
+
+<!-- ===== APP SCREEN ===== -->
+<div id="app-screen" class="hidden">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sb-head">
+      <div class="sb-logo">
+        <div class="logo-ico">🚗</div>
+        <div class="logo-txt">FLOTTE <span>2.0</span></div>
+      </div>
+      <div class="sb-toggle" onclick="toggleSidebar()">☰</div>
+    </div>
+    <nav class="sb-nav" id="sb-nav"></nav>
+    <div class="sb-foot">
+      <div class="user-card" onclick="showPage('parametres')">
+        <div class="u-av" id="u-av">NG</div>
+        <div class="u-inf">
+          <div class="u-name" id="u-name">Admin</div>
+          <div class="u-role">Super Admin · ngary.com</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main id="main">
+    <header id="header">
+      <div class="hdr-l">
+        <div class="hbtn" id="mob-menu" onclick="toggleMobile()" style="display:none">☰</div>
+        <h1 id="page-title">Tableau de Bord</h1>
+      </div>
+      <div class="hdr-r">
+        <div class="hbtn" onclick="showPage('alerts')" title="Alertes" id="hbtn-notif">
+          🔔<span class="notif-dot"></span>
+        </div>
+        <div class="hbtn" onclick="showPage('rapports')" title="Rapports">📊</div>
+        <div class="hbtn" onclick="showPage('chatbot')" title="Assistant IA">🤖</div>
+        <button class="btn btn-ghost btn-sm" onclick="doLogout()">Déconnexion</button>
+      </div>
+    </header>
+    <div id="page"></div>
+  </main>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════════════════╗
+// ║               FLOTTE 2.0 — APPLICATION              ║
+// ╚══════════════════════════════════════════════════════╝
+
+/* ─── DATA ─── */
+const DB = {
+  vehicles:[
+    {id:'V001',plate:'DK-0234-AB',brand:'Toyota',model:'Corolla',year:2022,status:'active',driver:'D001',owner:'O001',km:45230,earnings:2850000,fuel:'Essence',insurance:'2024-08-15'},
+    {id:'V002',plate:'DK-1567-CD',brand:'Hyundai',model:'Elantra',year:2021,status:'active',driver:'D002',owner:'O001',km:67890,earnings:3200000,fuel:'Essence',insurance:'2024-06-20'},
+    {id:'V003',plate:'DK-3891-EF',brand:'Kia',model:'Rio',year:2023,status:'maintenance',driver:'D003',owner:'O002',km:12450,earnings:980000,fuel:'Essence',insurance:'2024-12-01'},
+    {id:'V004',plate:'DK-5024-GH',brand:'Nissan',model:'Sentra',year:2022,status:'inactive',driver:null,owner:'O003',km:89100,earnings:4100000,fuel:'Essence',insurance:'2024-03-10'},
+    {id:'V005',plate:'DK-7123-IJ',brand:'Toyota',model:'Yaris',year:2023,status:'active',driver:'D004',owner:'O004',km:23780,earnings:1750000,fuel:'Essence',insurance:'2024-11-25'},
+    {id:'V006',plate:'DK-8901-KL',brand:'Suzuki',model:'Swift',year:2021,status:'active',driver:'D005',owner:'O001',km:55600,earnings:2640000,fuel:'Essence',insurance:'2024-01-30'},
+  ],
+  drivers:[
+    {id:'D001',name:'Moussa Diallo',phone:'+221 77 123 4567',email:'moussa@email.com',vehicle:'V001',status:'active',rating:4.8,trips:1245,earnings:2850000,joined:'2022-03-15',license:'DKR-2019-001',av:'MD',col:'#3b6bcc'},
+    {id:'D002',name:'Omar Ba',phone:'+221 76 234 5678',email:'omar@email.com',vehicle:'V002',status:'active',rating:4.6,trips:1567,earnings:3200000,joined:'2021-07-20',license:'DKR-2018-045',av:'OB',col:'#10c97a'},
+    {id:'D003',name:'Abdou Sow',phone:'+221 78 345 6789',email:'abdou@email.com',vehicle:'V003',status:'suspended',rating:4.2,trips:456,earnings:980000,joined:'2023-01-10',license:'DKR-2020-112',av:'AS',col:'#f5a623'},
+    {id:'D004',name:'Cheikh Diagne',phone:'+221 70 456 7890',email:'cheikh@email.com',vehicle:'V005',status:'active',rating:4.9,trips:892,earnings:1750000,joined:'2023-03-05',license:'DKR-2021-078',av:'CD',col:'#8b5cf6'},
+    {id:'D005',name:'Lamine Gueye',phone:'+221 77 567 8901',email:'lamine@email.com',vehicle:'V006',status:'active',rating:4.7,trips:1123,earnings:2640000,joined:'2021-11-18',license:'DKR-2019-234',av:'LG',col:'#ec4899'},
+  ],
+  owners:[
+    {id:'O001',name:'Ibrahima Ndiaye',phone:'+221 77 111 2222',email:'ibrahima@ngary.com',vehicles:3,status:'active',balance:1250000,joined:'2021-06-01',pass:'IBR2024'},
+    {id:'O002',name:'Fatou Diop',phone:'+221 76 222 3333',email:'fatou@ngary.com',vehicles:1,status:'active',balance:345000,joined:'2023-01-15',pass:'FAT2024'},
+    {id:'O003',name:'Mamadou Fall',phone:'+221 78 333 4444',email:'mamadou@ngary.com',vehicles:1,status:'inactive',balance:0,joined:'2022-08-20',pass:'MAM2024'},
+    {id:'O004',name:'Aminata Sy',phone:'+221 70 444 5555',email:'aminata@ngary.com',vehicles:1,status:'active',balance:520000,joined:'2023-03-10',pass:'AMI2024'},
+  ],
+  versements:[
+    {id:'VS001',date:'2024-01-15',vid:'V001',did:'D001',amount:95000,type:'journalier',status:'paid',method:'Cash',note:''},
+    {id:'VS002',date:'2024-01-15',vid:'V002',did:'D002',amount:105000,type:'journalier',status:'paid',method:'Wave',note:''},
+    {id:'VS003',date:'2024-01-15',vid:'V005',did:'D004',amount:88000,type:'journalier',status:'pending',method:'Orange Money',note:'En attente confirmation'},
+    {id:'VS004',date:'2024-01-14',vid:'V006',did:'D005',amount:92000,type:'journalier',status:'paid',method:'Cash',note:''},
+    {id:'VS005',date:'2024-01-14',vid:'V001',did:'D001',amount:97000,type:'journalier',status:'paid',method:'Cash',note:''},
+    {id:'VS006',date:'2024-01-13',vid:'V002',did:'D002',amount:110000,type:'journalier',status:'paid',method:'Wave',note:''},
+    {id:'VS007',date:'2024-01-10',vid:'V003',did:'D003',amount:76000,type:'journalier',status:'overdue',method:'Cash',note:'Retard paiement'},
+    {id:'VS008',date:'2024-01-09',vid:'V005',did:'D004',amount:91000,type:'journalier',status:'paid',method:'Free Money',note:''},
+  ],
+  depenses:[
+    {id:'DE001',date:'2024-01-14',vid:'V001',cat:'Carburant',amount:25000,desc:'Plein carburant',receipt:true},
+    {id:'DE002',date:'2024-01-13',vid:'V003',cat:'Réparation',amount:85000,desc:'Changement pneus',receipt:true},
+    {id:'DE003',date:'2024-01-12',vid:'V002',cat:'Assurance',amount:180000,desc:'Renouvellement assurance',receipt:true},
+    {id:'DE004',date:'2024-01-10',vid:'V001',cat:'Entretien',amount:35000,desc:'Vidange + filtres',receipt:false},
+    {id:'DE005',date:'2024-01-08',vid:'V005',cat:'Lavage',amount:5000,desc:'Lavage complet',receipt:false},
+    {id:'DE006',date:'2024-01-05',vid:'V002',cat:'Amende',amount:15000,desc:'Amende stationnement',receipt:true},
+    {id:'DE007',date:'2024-01-03',vid:'V006',cat:'Carburant',amount:28000,desc:'Plein carburant',receipt:false},
+    {id:'DE008',date:'2024-01-02',vid:'V004',cat:'Réparation',amount:120000,desc:'Boîte de vitesse',receipt:true},
+  ],
+  alerts:[
+    {id:'A001',type:'red',icon:'🚨',title:'Versement en retard',msg:'DK-3891-EF — Abdou Sow : 5 jours sans versement',time:'2h',read:false},
+    {id:'A002',type:'amber',icon:'🔧',title:'Maintenance requise',msg:'DK-5024-GH — Vidange dépassée de 2 000 km',time:'4h',read:false},
+    {id:'A003',type:'amber',icon:'📋',title:'Assurance expire bientôt',msg:'DK-8901-KL — Expire dans 15 jours (30/01/2024)',time:'6h',read:false},
+    {id:'A004',type:'blue',icon:'💳',title:'Nouveau versement',msg:'DK-1567-CD — Omar Ba a versé 110 000 FCFA via Wave',time:'1j',read:true},
+    {id:'A005',type:'green',icon:'🏆',title:'Objectif atteint',msg:'DK-0234-AB — Objectif mensuel 100% accompli',time:'2j',read:true},
+  ],
+  audit:[
+    {action:'Connexion',user:'Ibrahima Ndiaye',time:'Il y a 2h',detail:'IP: 41.82.144.12 · Mobile Safari'},
+    {action:'Versement ajouté',user:'Admin',time:'Il y a 3h',detail:'DK-1567-CD — 110 000 FCFA — Wave'},
+    {action:'Modification véhicule',user:'Admin',time:'Il y a 4h',detail:'DK-0234-AB — Kilométrage mis à jour'},
+    {action:'Connexion',user:'Fatou Diop',time:'Il y a 6h',detail:'IP: 41.82.150.88 · Chrome Desktop'},
+    {action:'Export rapport',user:'Ibrahima Ndiaye',time:'Il y a 1j',detail:'Rapport mensuel — Décembre 2023'},
+    {action:'Dépense ajoutée',user:'Admin',time:'Il y a 1j',detail:'DK-3891-EF — Réparation 85 000 FCFA'},
+  ]
+};
+
+/* ─── UTILS ─── */
+const $ = id => document.getElementById(id);
+const fc = (n,d=0)=>new Intl.NumberFormat('fr-SN',{minimumFractionDigits:d,maximumFractionDigits:d}).format(n)+' FCFA';
+const fd = s=>{const d=new Date(s);return d.toLocaleDateString('fr-SN',{day:'2-digit',month:'2-digit',year:'numeric'})};
+const ini = s=>s.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+const veh = id=>DB.vehicles.find(v=>v.id===id);
+const drv = id=>DB.drivers.find(d=>d.id===id);
+const own = id=>DB.owners.find(o=>o.id===id);
+const avCols=['#3b6bcc','#10c97a','#f5a623','#ef4545','#8b5cf6','#ec4899','#00d4ff','#059669'];
+const avCol = name=>avCols[name.split('').reduce((a,c)=>a+c.charCodeAt(0),0)%avCols.length];
+const emo = brand=>({Toyota:'🚗',Hyundai:'🚙',Kia:'🚗',Nissan:'🚘',Suzuki:'🏎',Honda:'🚗'}[brand]||'🚗');
+const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+
+function badge(status){
+  const m={
+    active:`<span class="badge b-green"><span class="dot dot-g"></span>Actif</span>`,
+    inactive:`<span class="badge b-gray"><span class="dot dot-x"></span>Inactif</span>`,
+    maintenance:`<span class="badge b-amber"><span class="dot dot-a"></span>Maintenance</span>`,
+    suspended:`<span class="badge b-red"><span class="dot dot-r"></span>Suspendu</span>`,
+    paid:`<span class="badge b-green">✓ Payé</span>`,
+    pending:`<span class="badge b-amber">⏳ En attente</span>`,
+    overdue:`<span class="badge b-red">⚠ En retard</span>`,
+  };
+  return m[status]||`<span class="badge b-gray">${status}</span>`;
+}
+
+/* ─── TOAST ─── */
+function toast(msg,type='info',ms=3200){
+  const ic={success:'✅',error:'❌',warning:'⚠️',info:'ℹ️'};
+  const bc={success:'var(--green)',error:'var(--red)',warning:'var(--amber)',info:'var(--blue)'};
+  const t=document.createElement('div');
+  t.className='toast';t.style.borderLeft=`3px solid ${bc[type]}`;
+  t.innerHTML=`<span style="font-size:17px">${ic[type]}</span><span class="toast-msg">${msg}</span><span class="toast-x" onclick="this.parentElement.remove()">✕</span>`;
+  $('toasts').appendChild(t);
+  setTimeout(()=>{t.style.animation='slideIn .28s reverse';setTimeout(()=>t.remove(),260)},ms);
+}
+
+/* ─── MODAL ─── */
+let modalEscFn=null;
+function openModal(title,body,footer='',size=''){
+  document.querySelector('.overlay')?.remove();
+  const el=document.createElement('div');
+  el.className='overlay';
+  el.innerHTML=`<div class="modal${size?' modal-'+size:''}">
+    <div class="m-head"><span class="m-title">${title}</span><span class="m-close" onclick="closeModal()">✕</span></div>
+    <div class="m-body">${body}</div>
+    ${footer?`<div class="m-foot">${footer}</div>`:''}
+  </div>`;
+  el.addEventListener('click',e=>{if(e.target===el)closeModal()});
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  modalEscFn=e=>{if(e.key==='Escape')closeModal()};
+  document.addEventListener('keydown',modalEscFn);
+}
+function closeModal(){
+  const el=document.querySelector('.overlay');
+  if(!el)return;
+  el.classList.remove('show');
+  setTimeout(()=>el.remove(),200);
+  if(modalEscFn){document.removeEventListener('keydown',modalEscFn);modalEscFn=null}
+}
+
+/* ─── CHARTS ─── */
+const chartInst={};
+const chartDefs={
+  responsive:true,maintainAspectRatio:false,
+  plugins:{
+    legend:{labels:{color:'#8fa3c8',font:{family:"'Plus Jakarta Sans',sans-serif",size:11.5},padding:14,usePointStyle:true,pointStyleWidth:7}},
+    tooltip:{backgroundColor:'#162040',borderColor:'#253048',borderWidth:1,
+      titleFont:{family:"'Plus Jakarta Sans',sans-serif",size:12.5,weight:'600'},
+      bodyFont:{family:"'Plus Jakarta Sans',sans-serif",size:12},
+      titleColor:'#e8edf8',bodyColor:'#8fa3c8',padding:11,cornerRadius:9}
+  },
+  scales:{
+    x:{grid:{color:'rgba(255,255,255,.045)',drawBorder:false},ticks:{color:'#4d6188',font:{family:"'Plus Jakarta Sans',sans-serif",size:11}}},
+    y:{grid:{color:'rgba(255,255,255,.045)',drawBorder:false},ticks:{color:'#4d6188',font:{family:"'Plus Jakarta Sans',sans-serif",size:11}}}
+  }
+};
+function mkChart(id,cfg){
+  const c=$(`c-${id}`);if(!c)return;
+  if(chartInst[id]){chartInst[id].destroy();delete chartInst[id]}
+  chartInst[id]=new Chart(c,cfg);
+}
+function chartsRevDep(){
+  mkChart('rev',{type:'bar',data:{labels:['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'],datasets:[
+    {label:'Versements (k FCFA)',data:[8200,9100,10400,9800,11200,12500,11800,13200,12100,14000,13500,15200],backgroundColor:'rgba(59,107,204,.72)',borderRadius:5,borderSkipped:false},
+    {label:'Dépenses (k FCFA)',data:[2100,2400,2800,2600,3000,3400,3200,3600,3300,3800,3700,4100],backgroundColor:'rgba(239,69,69,.55)',borderRadius:5,borderSkipped:false}
+  ]},options:{...chartDefs}});
+}
+function chartsWeekly(){
+  mkChart('week',{type:'line',data:{labels:['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'],datasets:[{
+    label:'Versements quotidiens (FCFA)',data:[320000,380000,360000,420000,450000,390000,410000],
+    borderColor:'#00d4ff',backgroundColor:'rgba(0,212,255,.07)',borderWidth:2.5,
+    pointBackgroundColor:'#00d4ff',pointRadius:4,pointHoverRadius:6,fill:true,tension:.4
+  }]},options:{...chartDefs,scales:{...chartDefs.scales,y:{...chartDefs.scales.y,ticks:{...chartDefs.scales.y.ticks,callback:v=>(v/1000).toFixed(0)+'k'}}}}});
+}
+function chartsVehiclePerf(){
+  mkChart('vperf',{type:'doughnut',data:{
+    labels:DB.vehicles.map(v=>v.plate),
+    datasets:[{data:DB.vehicles.map(v=>v.earnings/100000),backgroundColor:['rgba(59,107,204,.85)','rgba(0,212,255,.85)','rgba(16,201,122,.85)','rgba(245,166,35,.85)','rgba(139,92,246,.85)','rgba(236,72,153,.85)'],borderWidth:0,hoverOffset:8}]
+  },options:{...chartDefs,scales:{},cutout:'68%',plugins:{...chartDefs.plugins,tooltip:{...chartDefs.plugins.tooltip,callbacks:{label:c=>` ${(c.parsed*100000).toLocaleString('fr-SN')} FCFA`}}}}});
+}
+function chartsDepCat(){
+  const cats={};
+  DB.depenses.forEach(d=>{cats[d.cat]=(cats[d.cat]||0)+d.amount});
+  mkChart('dep',{type:'polarArea',data:{
+    labels:Object.keys(cats),
+    datasets:[{data:Object.values(cats),backgroundColor:['rgba(59,107,204,.7)','rgba(239,69,69,.7)','rgba(245,166,35,.7)','rgba(16,201,122,.7)','rgba(0,212,255,.7)','rgba(236,72,153,.7)'],borderWidth:0}]
+  },options:{...chartDefs,scales:{r:{grid:{color:'rgba(255,255,255,.05)'},ticks:{color:'#4d6188',backdropColor:'transparent',font:{size:10}}}}}});
+}
+
+/* ─── SIDEBAR NAV DEF ─── */
+const NAV=[
+  {sec:'Principal',items:[{id:'dashboard',ico:'📊',lbl:'Tableau de Bord'}]},
+  {sec:'Flotte',items:[{id:'vehicles',ico:'🚗',lbl:'Véhicules'},{id:'drivers',ico:'👤',lbl:'Chauffeurs'}]},
+  {sec:'Finance',items:[{id:'versements',ico:'💳',lbl:'Versements',badge:()=>DB.versements.filter(v=>v.status==='pending').length},{id:'depenses',ico:'💸',lbl:'Dépenses'}]},
+  {sec:'Analytique',items:[{id:'analyse',ico:'📈',lbl:'Analyse'},{id:'performance',ico:'⚡',lbl:'Performance'},{id:'rapports',ico:'📋',lbl:'Rapports'}]},
+  {sec:'Opérations',items:[{id:'suivi',ico:'📍',lbl:'Suivi GPS'},{id:'alerts',ico:'🔔',lbl:'Alertes',badge:()=>DB.alerts.filter(a=>!a.read).length}]},
+  {sec:'Administration',items:[{id:'acces',ico:'🔐',lbl:'Gestion Accès'},{id:'owner',ico:'🏢',lbl:'Espace Propriétaire'},{id:'chatbot',ico:'🤖',lbl:'Assistant IA'},{id:'parametres',ico:'⚙️',lbl:'Paramètres'}]},
+];
+
+function buildNav(){
+  const nav=$('sb-nav');
+  nav.innerHTML=NAV.map(sec=>`
+    <div class="nav-sec">
+      <div class="nav-sec-lbl">${sec.sec}</div>
+      ${sec.items.map(it=>{
+        const bc=it.badge?it.badge():0;
+        return `<div class="ni" data-page="${it.id}" onclick="showPage('${it.id}')">
+          <span class="ni-ico">${it.ico}</span>
+          <span class="ni-lbl">${it.lbl}</span>
+          ${bc?`<span class="ni-badge">${bc}</span>`:''}
+        </div>`;
+      }).join('')}
+    </div>`).join('');
+}
+
+let sidebarCollapsed=false;
+function toggleSidebar(){
+  sidebarCollapsed=!sidebarCollapsed;
+  const sb=$('sidebar'),mn=$('main');
+  sb.classList.toggle('collapsed',sidebarCollapsed);
+  mn.classList.toggle('collapsed',sidebarCollapsed);
+}
+function toggleMobile(){$('sidebar').classList.toggle('mob-open')}
+
+/* ─── PAGES ─── */
+let currentPage='';
+const pageTitles={dashboard:'Tableau de Bord',vehicles:'Véhicules',drivers:'Chauffeurs',versements:'Versements',depenses:'Dépenses',analyse:'Analyse',suivi:'Suivi GPS',performance:'Performance',alerts:'Alertes',rapports:'Rapports',acces:'Gestion des Accès',owner:'Espace Propriétaire',chatbot:'Assistant IA',parametres:'Paramètres'};
+
+function showPage(id){
+  currentPage=id;
+  $('page-title').textContent=pageTitles[id]||id;
+  document.querySelectorAll('.ni').forEach(n=>n.classList.toggle('active',n.dataset.page===id));
+  const fn={dashboard:pgDashboard,vehicles:pgVehicles,drivers:pgDrivers,versements:pgVersements,depenses:pgDepenses,analyse:pgAnalyse,suivi:pgSuivi,performance:pgPerformance,alerts:pgAlerts,rapports:pgRapports,acces:pgAcces,owner:pgOwner,chatbot:pgChatbot,parametres:pgParametres}[id];
+  if(fn){const p=$('page');p.innerHTML='';fn();$('page').scrollTop=0}
+  if(window.innerWidth<=900)$('sidebar').classList.remove('mob-open');
+}
+
+/* ── HELPERS ── */
+function inj(html){$('page').innerHTML=`<div class="page-anim">${html}</div>`}
+function stats4(arr){return`<div class="stats-grid mb20">${arr.map(s=>`<div class="stat-card" style="--sc:${s.c};--sb:${s.bg}"><div class="stat-ico">${s.i}</div><div class="stat-val">${s.v}</div><div class="stat-lbl">${s.l}</div>${s.t?`<div class="stat-trend ${s.t.startsWith('↑')?'trend-up':'trend-dn'}">${s.t}</div>`:''}</div>`).join('')}</div>`}
+
+/* ── DASHBOARD ── */
+function pgDashboard(){
+  const tV=DB.versements.filter(v=>v.status==='paid').reduce((s,v)=>s+v.amount,0);
+  const tD=DB.depenses.reduce((s,d)=>s+d.amount,0);
+  const aV=DB.vehicles.filter(v=>v.status==='active').length;
+  const aD=DB.drivers.filter(d=>d.status==='active').length;
+  const unread=DB.alerts.filter(a=>!a.read).length;
+  inj(`
+  <div class="flex ai jb mb20">
+    <div><div class="fs18 fw8 mb4">Vue d'ensemble</div><div class="fs13 c3">Lundi 15 Janvier 2024</div></div>
+    <div class="tabs" style="max-width:360px">
+      <div class="tab active">Aujourd'hui</div><div class="tab">Semaine</div><div class="tab">Mois</div><div class="tab">Année</div>
+    </div>
+  </div>
+  ${stats4([
+    {i:'💰',v:`${(tV/1000).toFixed(0)}k`,l:'Versements (FCFA)',c:'var(--cyan)',bg:'rgba(0,212,255,.1)',t:'↑ +12.5%'},
+    {i:'💸',v:`${(tD/1000).toFixed(0)}k`,l:'Dépenses (FCFA)',c:'var(--red)',bg:'rgba(239,69,69,.1)',t:'↑ +3.2%'},
+    {i:'🚗',v:`${aV}/${DB.vehicles.length}`,l:'Véhicules actifs',c:'var(--green)',bg:'rgba(16,201,122,.1)',t:'↑ Stable'},
+    {i:'👤',v:aD,l:'Chauffeurs actifs',c:'var(--purple)',bg:'rgba(139,92,246,.1)',t:'↑ +1 ce mois'},
+  ])}
+  <div class="g2 mb20">
+    <div class="card"><div class="card-head"><span class="card-title">📊 Revenus annuels</span><button class="btn btn-ghost btn-sm" onclick="toast('Export en cours…','info')">Exporter</button></div><div class="card-body" style="height:230px"><canvas id="c-rev"></canvas></div></div>
+    <div class="card"><div class="card-head"><span class="card-title">📈 Versements semaine</span></div><div class="card-body" style="height:230px"><canvas id="c-week"></canvas></div></div>
+  </div>
+  <div class="g2 mb20">
+    <div class="card">
+      <div class="card-head"><span class="card-title">💳 Versements récents</span><button class="btn btn-ghost btn-sm" onclick="showPage('versements')">Tout voir →</button></div>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Véhicule</th><th>Chauffeur</th><th>Montant</th><th>Statut</th></tr></thead><tbody>
+      ${DB.versements.slice(0,5).map(v=>{const vh=veh(v.vid),dr=drv(v.did);return`<tr><td><span class="mono fs12">${vh?.plate||'—'}</span></td><td>${dr?.name||'—'}</td><td class="fw6 tc-cyan">${fc(v.amount)}</td><td>${badge(v.status)}</td></tr>`}).join('')}
+      </tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="card-head"><span class="card-title">🔔 Alertes <span class="ni-badge" style="position:static;margin-left:6px">${unread}</span></span><button class="btn btn-ghost btn-sm" onclick="showPage('alerts')">Tout voir →</button></div>
+      <div class="card-body flex fc gap10">
+      ${DB.alerts.slice(0,4).map(a=>`<div class="alert al-${a.type==='red'?'red':a.type==='amber'?'amber':a.type==='green'?'green':'blue'}" style="${a.read?'opacity:.55':''}"><span style="font-size:16px">${a.icon}</span><div style="flex:1"><div class="fw6 fs13 mb4">${a.title}</div><div class="fs12 c2">${a.msg}</div></div><span class="fs11 c3">${a.time}</span></div>`).join('')}
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span class="card-title">🚗 Flotte — Aperçu rapide</span><button class="btn btn-ghost btn-sm" onclick="showPage('vehicles')">Gérer →</button></div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Immatriculation</th><th>Véhicule</th><th>Chauffeur</th><th>Propriétaire</th><th>Km</th><th>Revenus</th><th>Statut</th><th>Actions</th></tr></thead><tbody>
+    ${DB.vehicles.map(v=>{const o=own(v.owner),d=v.driver?drv(v.driver):null;return`<tr>
+      <td><span class="mono fs12" style="background:var(--bg-card2);padding:2px 8px;border-radius:4px">${v.plate}</span></td>
+      <td><span class="fw6">${v.brand}</span> ${v.model} <span class="c3">(${v.year})</span></td>
+      <td>${d?d.name:'<span class="c3">—</span>'}</td>
+      <td>${o?o.name:'—'}</td>
+      <td class="mono">${v.km.toLocaleString('fr-SN')}</td>
+      <td class="fw6 tc-cyan">${fc(v.earnings)}</td>
+      <td>${badge(v.status)}</td>
+      <td><div class="flex gap6"><button class="btn btn-ghost btn-sm btn-icon" onclick="vehicleDetail('${v.id}')" title="Détails">👁</button><button class="btn btn-ghost btn-sm btn-icon" onclick="modalAddVersement('${v.id}')" title="Versement">💳</button></div></td>
+    </tr>`}).join('')}
+    </tbody></table></div>
+  </div>`);
+  setTimeout(()=>{chartsRevDep();chartsWeekly()},60);
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.addEventListener('click',function(){this.closest('.tabs').querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));this.classList.add('active')}));
+}
+
+/* ── VEHICLES ── */
+function pgVehicles(){
+  const aV=DB.vehicles.filter(v=>v.status==='active').length;
+  const mV=DB.vehicles.filter(v=>v.status==='maintenance').length;
+  const iV=DB.vehicles.filter(v=>v.status==='inactive').length;
+  inj(`
+  <div class="flex ai jb mb20 fw gap10">
+    <div class="flex gap10 ai fw">
+      <div class="search-wrap"><input type="text" placeholder="Rechercher…" oninput="filterVehicles(this.value)" id="veh-search"></div>
+      <select class="inp" style="width:160px" onchange="filterVehicleStatus(this.value)" id="veh-status">
+        <option value="">Tous les statuts</option><option value="active">Actif</option><option value="maintenance">Maintenance</option><option value="inactive">Inactif</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="modalAddVehicle()">+ Ajouter véhicule</button>
+  </div>
+  ${stats4([
+    {i:'🚗',v:DB.vehicles.length,l:'Total véhicules',c:'var(--blue-light)',bg:'rgba(59,107,204,.1)'},
+    {i:'✅',v:aV,l:'Actifs',c:'var(--green)',bg:'rgba(16,201,122,.1)'},
+    {i:'🔧',v:mV,l:'Maintenance',c:'var(--amber)',bg:'rgba(245,166,35,.1)'},
+    {i:'⏸',v:iV,l:'Inactifs',c:'var(--red)',bg:'rgba(239,69,69,.1)'},
+  ])}
+  <div id="vgrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px"></div>`);
+  renderVGrid(DB.vehicles);
+}
+function renderVGrid(list){
+  const g=$('vgrid');if(!g)return;
+  if(!list.length){g.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-ico">🚗</div><div class="fw6 c2">Aucun véhicule trouvé</div></div>';return}
+  g.innerHTML=list.map(v=>{
+    const d=v.driver?drv(v.driver):null;
+    return`<div class="v-card">
+      <div class="v-img">${emo(v.brand)}<div style="position:absolute;top:10px;right:10px">${badge(v.status)}</div></div>
+      <div class="v-info">
+        <div class="v-plate">${v.plate}</div>
+        <div class="fw6 mb4">${v.brand} ${v.model} <span class="c3 fw5">${v.year}</span></div>
+        <div class="divider"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:12.5px;margin-bottom:13px">
+          <div><span class="c3">Chauffeur</span><br>${d?`<span class="fw5">${d.name}</span>`:'<em class="c3">Non assigné</em>'}</div>
+          <div><span class="c3">Km</span><br><span class="mono">${v.km.toLocaleString('fr-SN')} km</span></div>
+          <div><span class="c3">Propriétaire</span><br><span class="fw5">${own(v.owner)?.name||'—'}</span></div>
+          <div><span class="c3">Revenus</span><br><span class="tc-cyan fw6">${(v.earnings/1000).toFixed(0)}k FCFA</span></div>
+        </div>
+        <div class="flex gap8">
+          <button class="btn btn-ghost btn-sm" style="flex:1" onclick="vehicleDetail('${v.id}')">Détails</button>
+          <button class="btn btn-primary btn-sm" style="flex:1" onclick="modalAddVersement('${v.id}')">+ Versement</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function filterVehicles(q){
+  const s=($('veh-status')||{value:''}).value;
+  let list=DB.vehicles;
+  if(q)list=list.filter(v=>[v.plate,v.brand,v.model,(own(v.owner)||{}).name||''].join(' ').toLowerCase().includes(q.toLowerCase()));
+  if(s)list=list.filter(v=>v.status===s);
+  renderVGrid(list);
+}
+function filterVehicleStatus(s){
+  const q=($('veh-search')||{value:''}).value;
+  let list=DB.vehicles;
+  if(q)list=list.filter(v=>[v.plate,v.brand,v.model,(own(v.owner)||{}).name||''].join(' ').toLowerCase().includes(q.toLowerCase()));
+  if(s)list=list.filter(v=>v.status===s);
+  renderVGrid(list);
+}
+function vehicleDetail(id){
+  const v=veh(id);if(!v)return;
+  const d=v.driver?drv(v.driver):null;
+  const vers=DB.versements.filter(vs=>vs.vid===id);
+  const deps=DB.depenses.filter(de=>de.vid===id);
+  const tV=vers.filter(vs=>vs.status==='paid').reduce((s,vs)=>s+vs.amount,0);
+  const tD=deps.reduce((s,de)=>s+de.amount,0);
+  openModal(`🚗 ${v.brand} ${v.model} — ${v.plate}`,`
+  <div class="g2 mb16">
+    <div style="background:var(--bg-card2);border-radius:var(--r-md);padding:15px">
+      <div class="c3 fs12 mb10">Informations véhicule</div>
+      ${[['Immatriculation',`<span class="mono">${v.plate}</span>`],['Marque/Modèle',`${v.brand} ${v.model}`],['Année',v.year],['Carburant',v.fuel],['Km',`${v.km.toLocaleString('fr-SN')} km`],['Propriétaire',own(v.owner)?.name||'—'],['Statut',badge(v.status)]].map(([l,val])=>`<div class="flex ai jb fs13" style="padding:5px 0;border-bottom:1px solid var(--border)"><span class="c3">${l}</span><span>${val}</span></div>`).join('')}
+    </div>
+    <div>
+      <div class="stat-card mb12" style="--sc:var(--cyan);--sb:rgba(0,212,255,.1)"><div class="stat-ico">💰</div><div class="stat-val">${(tV/1000).toFixed(0)}k</div><div class="stat-lbl">Total versé (FCFA)</div></div>
+      <div class="stat-card" style="--sc:var(--red);--sb:rgba(239,69,69,.1)"><div class="stat-ico">💸</div><div class="stat-val">${(tD/1000).toFixed(0)}k</div><div class="stat-lbl">Total dépenses (FCFA)</div></div>
+    </div>
+  </div>
+  ${d?`<div style="background:var(--bg-card2);border-radius:var(--r-md);padding:15px;margin-bottom:16px"><div class="c3 fs12 mb10">Chauffeur assigné</div><div class="flex ai gap12"><div class="av" style="background:${d.col}">${d.av}</div><div><div class="fw6">${d.name}</div><div class="c2 fs12">${d.phone} · ⭐ ${d.rating}</div></div><span style="margin-left:auto">${badge(d.status)}</span></div></div>`:''}
+  <div style="background:var(--bg-card2);border-radius:var(--r-md);padding:15px">
+    <div class="c3 fs12 mb10">Derniers versements</div>
+    ${vers.length?`<table class="tbl" style="font-size:12px"><thead><tr><th>Date</th><th>Montant</th><th>Méthode</th><th>Statut</th></tr></thead><tbody>${vers.slice(0,5).map(vs=>`<tr><td>${fd(vs.date)}</td><td class="fw6">${fc(vs.amount)}</td><td>${vs.method}</td><td>${badge(vs.status)}</td></tr>`).join('')}</tbody></table>`:'<p class="c3 fs13">Aucun versement</p>'}
+  </div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Fermer</button><button class="btn btn-primary" onclick="closeModal();modalAddVersement('${id}')">+ Versement</button>`,
+  'lg');
+}
+function modalAddVehicle(){
+  openModal('🚗 Ajouter un véhicule',`
+  <div class="fg"><label class="lbl">Immatriculation *</label><input type="text" class="inp" id="nv-plate" placeholder="DK-0000-AB" style="text-transform:uppercase"></div>
+  <div class="form-row">
+    <div class="fg"><label class="lbl">Marque *</label><select class="inp" id="nv-brand"><option>Toyota</option><option>Hyundai</option><option>Kia</option><option>Nissan</option><option>Suzuki</option><option>Honda</option><option>Autre</option></select></div>
+    <div class="fg"><label class="lbl">Modèle *</label><input type="text" class="inp" id="nv-model" placeholder="Corolla"></div>
+  </div>
+  <div class="form-row">
+    <div class="fg"><label class="lbl">Année *</label><input type="number" class="inp" id="nv-year" value="2024" min="2000" max="2030"></div>
+    <div class="fg"><label class="lbl">Carburant</label><select class="inp" id="nv-fuel"><option>Essence</option><option>Diesel</option><option>Hybride</option></select></div>
+  </div>
+  <div class="fg"><label class="lbl">Propriétaire *</label><select class="inp" id="nv-owner">${DB.owners.map(o=>`<option value="${o.id}">${o.name}</option>`).join('')}</select></div>
+  <div class="fg"><label class="lbl">Kilométrage actuel</label><input type="number" class="inp" id="nv-km" value="0" min="0"></div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" onclick="saveNewVehicle()">Ajouter</button>`);
+}
+function saveNewVehicle(){
+  const plate=($('nv-plate')||{value:''}).value.trim().toUpperCase();
+  const model=($('nv-model')||{value:''}).value.trim();
+  if(!plate||!model){toast('Remplissez les champs obligatoires','error');return}
+  const nv={id:'V'+(DB.vehicles.length+1).toString().padStart(3,'0'),plate,brand:$('nv-brand').value,model,year:parseInt($('nv-year').value),status:'inactive',driver:null,owner:$('nv-owner').value,km:parseInt($('nv-km').value)||0,earnings:0,fuel:$('nv-fuel').value,insurance:''};
+  DB.vehicles.push(nv);closeModal();toast('Véhicule ajouté avec succès ✓','success');pgVehicles();
+}
+
+/* ── DRIVERS ── */
+function pgDrivers(){
+  const avg=(DB.drivers.reduce((s,d)=>s+d.rating,0)/DB.drivers.length).toFixed(1);
+  inj(`
+  <div class="flex ai jb mb20 fw gap10">
+    <div class="search-wrap"><input type="text" placeholder="Rechercher un chauffeur…" oninput="filterDrivers(this.value)"></div>
+    <button class="btn btn-primary" onclick="modalAddDriver()">+ Ajouter chauffeur</button>
+  </div>
+  ${stats4([
+    {i:'👤',v:DB.drivers.length,l:'Total chauffeurs',c:'var(--blue-light)',bg:'rgba(59,107,204,.1)'},
+    {i:'✅',v:DB.drivers.filter(d=>d.status==='active').length,l:'Actifs',c:'var(--green)',bg:'rgba(16,201,122,.1)'},
+    {i:'🚫',v:DB.drivers.filter(d=>d.status==='suspended').length,l:'Suspendus',c:'var(--red)',bg:'rgba(239,69,69,.1)'},
+    {i:'⭐',v:avg,l:'Note moyenne',c:'var(--amber)',bg:'rgba(245,166,35,.1)'},
+  ])}
+  <div class="card" id="drv-card">
+    <div class="card-head"><span class="card-title">👤 Liste des chauffeurs</span></div>
+    <div class="tbl-wrap" id="drv-tbl">${driverTable(DB.drivers)}</div>
+  </div>`);
+}
+function driverTable(list){
+  if(!list.length)return'<div class="empty"><div class="empty-ico">👤</div><div class="c2 fw6">Aucun chauffeur trouvé</div></div>';
+  return`<table class="tbl"><thead><tr><th>Chauffeur</th><th>Téléphone</th><th>Véhicule</th><th>Note</th><th>Courses</th><th>Revenus</th><th>Statut</th><th>Actions</th></tr></thead><tbody>
+  ${list.map(d=>{const v=d.vehicle?veh(d.vehicle):null;return`<tr>
+    <td><div class="flex ai gap10"><div class="av" style="background:${d.col}">${d.av}</div><div><div class="fw6">${d.name}</div><div class="c3 fs12">${d.email}</div></div></div></td>
+    <td class="mono fs12">${d.phone}</td>
+    <td>${v?`<span class="mono fs12">${v.plate}</span>`:'<span class="c3">—</span>'}</td>
+    <td>⭐ ${d.rating}</td>
+    <td class="mono">${d.trips.toLocaleString('fr-SN')}</td>
+    <td class="fw6 tc-cyan">${fc(d.earnings)}</td>
+    <td>${badge(d.status)}</td>
+    <td><div class="flex gap6">
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="toast('Profil de '+${JSON.stringify(d.name)},'info')" title="Voir">👁</button>
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="toggleDriverStatus('${d.id}')" title="${d.status==='active'?'Suspendre':'Activer'}">${d.status==='active'?'🚫':'✅'}</button>
+    </div></td>
+  </tr>`}).join('')}
+  </tbody></table>`;
+}
+function filterDrivers(q){const t=$('drv-tbl');if(t)t.innerHTML=driverTable(DB.drivers.filter(d=>[d.name,d.phone,d.email].join(' ').toLowerCase().includes(q.toLowerCase())))}
+function toggleDriverStatus(id){const d=DB.drivers.find(x=>x.id===id);if(!d)return;d.status=d.status==='active'?'suspended':'active';toast(`${d.name} : ${d.status==='active'?'Activé':'Suspendu'}`,'success');pgDrivers()}
+function modalAddDriver(){
+  openModal('👤 Ajouter un chauffeur',`
+  <div class="form-row"><div class="fg"><label class="lbl">Prénom *</label><input type="text" class="inp" id="nd-prenom" placeholder="Moussa"></div><div class="fg"><label class="lbl">Nom *</label><input type="text" class="inp" id="nd-nom" placeholder="Diallo"></div></div>
+  <div class="fg"><label class="lbl">Téléphone *</label><input type="tel" class="inp" id="nd-tel" placeholder="+221 77 000 0000"></div>
+  <div class="fg"><label class="lbl">Email</label><input type="email" class="inp" id="nd-email" placeholder="chauffeur@email.com"></div>
+  <div class="fg"><label class="lbl">N° Permis *</label><input type="text" class="inp" id="nd-lic" placeholder="DKR-2024-000"></div>
+  <div class="fg"><label class="lbl">Véhicule assigné</label><select class="inp" id="nd-veh"><option value="">— Non assigné —</option>${DB.vehicles.map(v=>`<option value="${v.id}">${v.plate} — ${v.brand} ${v.model}</option>`).join('')}</select></div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" onclick="saveNewDriver()">Ajouter</button>`);
+}
+function saveNewDriver(){
+  const p=($('nd-prenom')||{value:''}).value.trim(),n=($('nd-nom')||{value:''}).value.trim(),t=($('nd-tel')||{value:''}).value.trim();
+  if(!p||!n||!t){toast('Remplissez les champs obligatoires','error');return}
+  const name=`${p} ${n}`;
+  const nd={id:'D'+(DB.drivers.length+1).toString().padStart(3,'0'),name,phone:t,email:$('nd-email').value,vehicle:$('nd-veh').value||null,status:'active',rating:5.0,trips:0,earnings:0,joined:new Date().toISOString().slice(0,10),license:$('nd-lic').value,av:ini(name),col:avCol(name)};
+  DB.drivers.push(nd);if(nd.vehicle){const v=veh(nd.vehicle);if(v)v.driver=nd.id}
+  closeModal();toast(`${name} ajouté avec succès ✓`,'success');pgDrivers();
+}
+
+/* ── VERSEMENTS ── */
+function pgVersements(){
+  const paid=DB.versements.filter(v=>v.status==='paid');
+  const pend=DB.versements.filter(v=>v.status==='pending');
+  const over=DB.versements.filter(v=>v.status==='overdue');
+  const tPaid=paid.reduce((s,v)=>s+v.amount,0);
+  const tPend=pend.reduce((s,v)=>s+v.amount,0);
+  const tOver=over.reduce((s,v)=>s+v.amount,0);
+  inj(`
+  <div class="flex ai jb mb20 fw gap10">
+    <div class="flex gap10 ai fw">
+      <input type="date" class="inp" value="${new Date().toISOString().slice(0,10)}" style="width:auto">
+      <select class="inp" style="width:160px" id="vs-filter" onchange="filterVersements(this.value)">
+        <option value="">Tous statuts</option><option value="paid">Payé</option><option value="pending">En attente</option><option value="overdue">En retard</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="modalAddVersement('')">+ Enregistrer versement</button>
+  </div>
+  ${stats4([
+    {i:'✅',v:`${(tPaid/1000).toFixed(0)}k`,l:'Payés (FCFA)',c:'var(--green)',bg:'rgba(16,201,122,.1)'},
+    {i:'⏳',v:`${(tPend/1000).toFixed(0)}k`,l:'En attente (FCFA)',c:'var(--amber)',bg:'rgba(245,166,35,.1)'},
+    {i:'⚠',v:`${(tOver/1000).toFixed(0)}k`,l:'En retard (FCFA)',c:'var(--red)',bg:'rgba(239,69,69,.1)'},
+    {i:'📊',v:DB.versements.length,l:'Total transactions',c:'var(--cyan)',bg:'rgba(0,212,255,.1)'},
+  ])}
+  <div class="card">
+    <div class="card-head"><span class="card-title">💳 Historique versements</span><button class="btn btn-ghost btn-sm" onclick="toast('Export Excel en cours…','info')">📥 Exporter</button></div>
+    <div class="tbl-wrap" id="vs-tbl">${versTable(DB.versements)}</div>
+  </div>`);
+}
+function versTable(list){
+  if(!list.length)return'<div class="empty"><div class="empty-ico">💳</div><div class="c2 fw6">Aucun versement</div></div>';
+  return`<table class="tbl"><thead><tr><th>ID</th><th>Date</th><th>Véhicule</th><th>Chauffeur</th><th>Montant</th><th>Méthode</th><th>Note</th><th>Statut</th><th>Actions</th></tr></thead><tbody>
+  ${list.map(v=>{const vh=veh(v.vid),dr=drv(v.did);return`<tr>
+    <td class="mono c3 fs12">${v.id}</td><td>${fd(v.date)}</td>
+    <td><span class="mono fs12">${vh?.plate||'—'}</span></td>
+    <td>${dr?.name||'—'}</td>
+    <td class="fw6 tc-cyan">${fc(v.amount)}</td>
+    <td><span class="badge b-gray">${v.method}</span></td>
+    <td class="c2 fs12">${v.note||'—'}</td>
+    <td>${badge(v.status)}</td>
+    <td><div class="flex gap6">
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="toast('Reçu généré','info')" title="Reçu">🧾</button>
+      ${v.status==='pending'?`<button class="btn btn-success btn-sm" onclick="confirmVersement('${v.id}')">Confirmer</button>`:''}
+    </div></td>
+  </tr>`}).join('')}
+  </tbody></table>`;
+}
+function filterVersements(s){const t=$('vs-tbl');if(t)t.innerHTML=versTable(s?DB.versements.filter(v=>v.status===s):DB.versements)}
+function confirmVersement(id){const v=DB.versements.find(x=>x.id===id);if(!v)return;v.status='paid';toast('Versement confirmé ✓','success');pgVersements()}
+function modalAddVersement(vid){
+  openModal('💳 Enregistrer un versement',`
+  ${vid?`<div class="alert al-blue mb16">Véhicule : <strong>${veh(vid)?.plate} — ${veh(vid)?.brand} ${veh(vid)?.model}</strong></div>`:''}
+  <div class="fg"><label class="lbl">Véhicule *</label><select class="inp" id="av-vid" onchange="updateDriverSel(this.value)">${DB.vehicles.map(v=>`<option value="${v.id}" ${v.id===vid?'selected':''}>${v.plate} — ${v.brand} ${v.model}</option>`).join('')}</select></div>
+  <div class="fg"><label class="lbl">Chauffeur</label><select class="inp" id="av-did">${DB.drivers.map(d=>`<option value="${d.id}">${d.name}</option>`).join('')}</select></div>
+  <div class="fg"><label class="lbl">Montant (FCFA) *</label><input type="number" class="inp" id="av-amount" placeholder="90000" step="500" min="0"></div>
+  <div class="form-row">
+    <div class="fg"><label class="lbl">Date *</label><input type="date" class="inp" id="av-date" value="${new Date().toISOString().slice(0,10)}"></div>
+    <div class="fg"><label class="lbl">Méthode</label><select class="inp" id="av-meth"><option>Cash</option><option>Wave</option><option>Orange Money</option><option>Free Money</option><option>Virement</option></select></div>
+  </div>
+  <div class="fg"><label class="lbl">Note</label><textarea class="inp" id="av-note" rows="2" placeholder="Remarques…"></textarea></div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-success" onclick="saveVersement()">Enregistrer</button>`);
+  if(vid)updateDriverSel(vid);
+}
+function updateDriverSel(vid){
+  const v=veh(vid);if(!v||!v.driver)return;
+  const sel=$('av-did');if(sel)sel.value=v.driver;
+}
+function saveVersement(){
+  const amount=parseFloat(($('av-amount')||{value:0}).value);
+  if(!amount||amount<=0){toast('Montant invalide','error');return}
+  const nv={id:'VS'+(DB.versements.length+1).toString().padStart(3,'0'),date:$('av-date').value,vid:$('av-vid').value,did:$('av-did').value,amount,type:'journalier',status:'paid',method:$('av-meth').value,note:$('av-note').value};
+  DB.versements.unshift(nv);closeModal();toast('Versement enregistré ✓','success');if(currentPage==='versements')pgVersements();
+}
+
+/* ── DÉPENSES ── */
+function pgDepenses(){
+  const total=DB.depenses.reduce((s,d)=>s+d.amount,0);
+  const cats={};DB.depenses.forEach(d=>{cats[d.cat]=(cats[d.cat]||0)+d.amount});
+  inj(`
+  <div class="flex ai jb mb20 fw gap10">
+    <div class="flex gap10 ai fw">
+      <select class="inp" style="width:170px" id="dep-filter" onchange="filterDepenses(this.value)">
+        <option value="">Toutes catégories</option>${Object.keys(cats).map(c=>`<option value="${c}">${c}</option>`).join('')}
+      </select>
+    </div>
+    <button class="btn btn-primary" onclick="modalAddDepense()">+ Ajouter dépense</button>
+  </div>
+  ${stats4([
+    {i:'💸',v:`${(total/1000).toFixed(0)}k`,l:'Total dépenses',c:'var(--red)',bg:'rgba(239,69,69,.1)'},
+    {i:'⛽',v:`${((cats['Carburant']||0)/1000).toFixed(0)}k`,l:'Carburant',c:'var(--blue-light)',bg:'rgba(59,107,204,.1)'},
+    {i:'🔧',v:`${((cats['Réparation']||0)/1000).toFixed(0)}k`,l:'Réparations',c:'var(--amber)',bg:'rgba(245,166,35,.1)'},
+    {i:'📋',v:`${((cats['Assurance']||0)/1000).toFixed(0)}k`,l:'Assurances',c:'var(--green)',bg:'rgba(16,201,122,.1)'},
+  ])}
+  <div class="g2 mb20">
+    <div class="card"><div class="card-head"><span class="card-title">📊 Répartition</span></div><div class="card-body" style="height:250px"><canvas id="c-dep"></canvas></div></div>
+    <div class="card"><div class="card-head"><span class="card-title">📈 Résumé par catégorie</span></div><div class="card-body">
+      ${Object.entries(cats).map(([cat,amt])=>{const pct=total?Math.round(amt/total*100):0;const col={Carburant:'var(--blue-light)',Réparation:'var(--red)',Assurance:'var(--amber)',Entretien:'var(--green)',Lavage:'var(--cyan)',Amende:'var(--purple)'}[cat]||'var(--blue)';return`
+      <div class="mb16"><div class="flex ai jb fs13 mb6"><span>${cat}</span><span class="fw6">${(amt/1000).toFixed(0)}k FCFA (${pct}%)</span></div>
+      <div class="prog"><div class="prog-bar" style="width:${pct}%;background:${col}"></div></div></div>`}).join('')}
+    </div></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span class="card-title">💸 Liste des dépenses</span><button class="btn btn-ghost btn-sm" onclick="toast('Export PDF en cours…','info')">📥 Exporter</button></div>
+    <div class="tbl-wrap" id="dep-tbl">${depTable(DB.depenses)}</div>
+  </div>`);
+  setTimeout(()=>chartsDepCat(),60);
+}
+function depTable(list){
+  if(!list.length)return'<div class="empty"><div class="empty-ico">💸</div><div class="c2 fw6">Aucune dépense</div></div>';
+  return`<table class="tbl"><thead><tr><th>Date</th><th>Véhicule</th><th>Catégorie</th><th>Description</th><th>Montant</th><th>Justificatif</th><th>Actions</th></tr></thead><tbody>
+  ${list.map(d=>{const v=veh(d.vid);return`<tr>
+    <td>${fd(d.date)}</td>
+    <td><span class="mono fs12">${v?.plate||'—'}</span></td>
+    <td><span class="badge b-gray">${d.cat}</span></td>
+    <td>${d.desc}</td>
+    <td class="fw6 tc-red">${fc(d.amount)}</td>
+    <td>${d.receipt?'<span class="badge b-green">✓ Oui</span>':'<span class="badge b-gray">Non</span>'}</td>
+    <td><div class="flex gap6">
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="deleteDepense('${d.id}')" title="Supprimer">🗑</button>
+    </div></td>
+  </tr>`}).join('')}
+  </tbody></table>`;
+}
+function filterDepenses(cat){const t=$('dep-tbl');if(t)t.innerHTML=depTable(cat?DB.depenses.filter(d=>d.cat===cat):DB.depenses)}
+function deleteDepense(id){if(!confirm('Supprimer cette dépense ?'))return;const i=DB.depenses.findIndex(d=>d.id===id);if(i!==-1){DB.depenses.splice(i,1);toast('Dépense supprimée','success');pgDepenses()}}
+function modalAddDepense(){
+  openModal('💸 Ajouter une dépense',`
+  <div class="fg"><label class="lbl">Véhicule *</label><select class="inp" id="nd-vid">${DB.vehicles.map(v=>`<option value="${v.id}">${v.plate} — ${v.brand} ${v.model}</option>`).join('')}</select></div>
+  <div class="form-row">
+    <div class="fg"><label class="lbl">Catégorie *</label><select class="inp" id="nd-cat"><option>Carburant</option><option>Réparation</option><option>Assurance</option><option>Entretien</option><option>Lavage</option><option>Amende</option><option>Autre</option></select></div>
+    <div class="fg"><label class="lbl">Date *</label><input type="date" class="inp" id="nd-date" value="${new Date().toISOString().slice(0,10)}"></div>
+  </div>
+  <div class="fg"><label class="lbl">Montant (FCFA) *</label><input type="number" class="inp" id="nd-amount" placeholder="0" step="100" min="0"></div>
+  <div class="fg"><label class="lbl">Description *</label><input type="text" class="inp" id="nd-desc" placeholder="Décrivez la dépense…"></div>
+  <div class="fg"><label class="lbl">Justificatif</label><input type="file" class="inp" accept="image/*,.pdf"></div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" onclick="saveDepense()">Enregistrer</button>`);
+}
+function saveDepense(){
+  const amount=parseFloat(($('nd-amount')||{value:0}).value),desc=($('nd-desc')||{value:''}).value.trim();
+  if(!amount||amount<=0||!desc){toast('Remplissez les champs obligatoires','error');return}
+  const nd={id:'DE'+(DB.depenses.length+1).toString().padStart(3,'0'),date:$('nd-date').value,vid:$('nd-vid').value,cat:$('nd-cat').value,amount,desc,receipt:false};
+  DB.depenses.unshift(nd);closeModal();toast('Dépense ajoutée ✓','success');if(currentPage==='depenses')pgDepenses();
+}
+
+/* ── ANALYSE ── */
+function pgAnalyse(){
+  inj(`
+  <div class="flex ai jb mb20 fw gap10">
+    <div class="tabs"><div class="tab active">Mensuel</div><div class="tab">Trimestriel</div><div class="tab">Annuel</div><div class="tab">Personnalisé</div></div>
+    <button class="btn btn-ghost btn-sm" onclick="toast('Export rapport…','info')">📥 Exporter</button>
+  </div>
+  ${stats4([
+    {i:'💹',v:'89%',l:'Taux de collecte',c:'var(--green)',bg:'rgba(16,201,122,.08)',t:'↑ +3% vs mois dernier'},
+    {i:'📊',v:'97k',l:'Versement moyen/jour',c:'var(--cyan)',bg:'rgba(0,212,255,.08)',t:'↑ Stable'},
+    {i:'⚡',v:'76%',l:'ROI flotte',c:'var(--amber)',bg:'rgba(245,166,35,.08)',t:'↑ +5.2%'},
+    {i:'⭐',v:'4.7',l:'Note chauffeurs moy.',c:'var(--purple)',bg:'rgba(139,92,246,.08)',t:'↑ Excellent'},
+  ])}
+  <div class="g2 mb20">
+    <div class="card"><div class="card-head"><span class="card-title">💰 Revenus vs Dépenses</span></div><div class="card-body" style="height:260px"><canvas id="c-rev"></canvas></div></div>
+    <div class="card"><div class="card-head"><span class="card-title">🚗 Performance par véhicule</span></div><div class="card-body" style="height:260px"><canvas id="c-vperf"></canvas></div></div>
+  </div>
+  <div class="card mb20">
+    <div class="card-head"><span class="card-title">🏆 Top Performeurs du mois</span></div>
+    <div class="card-body"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px">
+    ${[...DB.drivers].sort((a,b)=>b.earnings-a.earnings).slice(0,5).map((d,i)=>`
+      <div style="background:var(--bg-card2);border-radius:var(--r-md);padding:14px;border:1px solid var(--border)">
+        <div class="flex ai gap10 mb10"><span style="font-size:18px">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]}</span>
+          <div class="av" style="background:${d.col};width:30px;height:30px;font-size:11px">${d.av}</div>
+          <div><div class="fw6 fs13">${d.name}</div><div class="c3 fs11">⭐ ${d.rating}</div></div>
+        </div>
+        <div class="tc-cyan fw6">${fc(d.earnings)}</div>
+        <div class="c3 fs12">${d.trips.toLocaleString('fr-SN')} courses</div>
+        <div class="prog mt8"><div class="prog-bar" style="width:${Math.round(d.earnings/DB.drivers.reduce((m,x)=>Math.max(m,x.earnings),1)*100)}%"></div></div>
+      </div>`).join('')}
+    </div></div>
+  </div>`);
+  setTimeout(()=>{chartsRevDep();chartsVehiclePerf()},60);
+  document.querySelectorAll('.tabs .tab').forEach(t=>t.addEventListener('click',function(){this.closest('.tabs').querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));this.classList.add('active')}));
+}
+
+/* ── SUIVI ── */
+function pgSuivi(){
+  inj(`
+  <div class="g2" style="gap:16px;height:calc(100vh - 140px);min-height:500px">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div class="map-box" style="flex:1">
+        <div class="map-pulse">📍</div>
+        <p class="fw6">Suivi GPS en temps réel</p>
+        <p class="fs13 c3">Intégration Google Maps / Mapbox disponible</p>
+        <button class="btn btn-primary btn-sm" onclick="toast('Connexion GPS initiée…','info')">🛰 Activer le suivi</button>
+      </div>
+      <div class="card"><div class="card-body p12"><div class="flex gap16 fw">
+        ${[{l:'En ligne',n:4,s:'dot-g'},{l:'Hors ligne',n:2,s:'dot-x'},{l:'En course',n:3,s:'dot-a'}].map(s=>`<div class="flex ai gap8 fs13"><span class="dot ${s.s}"></span>${s.l} : <strong>${s.n}</strong></div>`).join('')}
+      </div></div></div>
+    </div>
+    <div class="card" style="overflow:hidden;display:flex;flex-direction:column">
+      <div class="card-head"><span class="card-title">📡 Véhicules</span></div>
+      <div style="flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:9px">
+        ${DB.vehicles.map(v=>`
+        <div style="background:var(--bg-card2);border-radius:var(--r-md);padding:13px;border:1px solid var(--border);cursor:pointer;transition:var(--tr)" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
+          <div class="flex ai jb mb6">
+            <div class="flex ai gap8"><span class="dot ${v.status==='active'?'dot-g':'dot-x'}"></span><span class="mono fw6 fs13">${v.plate}</span></div>
+            ${badge(v.status)}
+          </div>
+          <div class="c2 fs13">${v.driver?drv(v.driver)?.name:'Non assigné'}</div>
+          <div class="c3 fs12 mt4">${v.status==='active'?`📍 Dakar, Plateau · il y a ${rnd(1,12)} min`:'⭕ Inactif'}</div>
+          ${v.status==='active'?`<div class="flex gap16 mt8 fs12"><span>⚡ ${rnd(20,80)} km/h</span><span>⛽ ${rnd(20,90)}%</span><span style="color:var(--green)">● GPS OK</span></div>`:''}
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`);
+}
+
+/* ── PERFORMANCE ── */
+function pgPerformance(){
+  inj(`
+  ${stats4([
+    {i:'⚡',v:'91.5%',l:'Disponibilité flotte',c:'var(--green)',bg:'rgba(16,201,122,.08)',t:'↑ +1.2%'},
+    {i:'💰',v:'97.5k',l:'Revenus/véhicule/j',c:'var(--cyan)',bg:'rgba(0,212,255,.08)',t:'↑ +5%'},
+    {i:'🛣',v:'85 F/km',l:'Coût/km moyen',c:'var(--amber)',bg:'rgba(245,166,35,.08)',t:'↓ -2%'},
+    {i:'⭐',v:'4.7/5',l:'Satisfaction',c:'var(--purple)',bg:'rgba(139,92,246,.08)',t:'↑ Stable'},
+  ])}
+  <div class="card">
+    <div class="card-head"><span class="card-title">📊 Tableau de performance par véhicule</span></div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Véhicule</th><th>Chauffeur</th><th>Jours actifs</th><th>Versements</th><th>Moy/jour</th><th>Dépenses</th><th>Bénéfice net</th><th>Score</th></tr></thead><tbody>
+    ${DB.vehicles.map(v=>{
+      const d=v.driver?drv(v.driver):null;
+      const vers=DB.versements.filter(vs=>vs.vid===v.id&&vs.status==='paid');
+      const deps=DB.depenses.filter(de=>de.vid===v.id);
+      const tV=vers.reduce((s,vs)=>s+vs.amount,0),tD=deps.reduce((s,de)=>s+de.amount,0);
+      const net=tV-tD,j=vers.length,moy=j?Math.round(tV/j):0;
+      const score=Math.min(100,Math.max(0,Math.round(tV>0?(net/tV)*70+((d?.rating||0)/5)*30:0)));
+      const sc=score>65?'var(--green)':score>35?'var(--amber)':'var(--red)';
+      return`<tr>
+        <td><span class="mono fs12">${v.plate}</span></td>
+        <td>${d?d.name:'<span class="c3">—</span>'}</td>
+        <td class="mono">${j}</td>
+        <td class="fw6 tc-cyan">${fc(tV)}</td>
+        <td>${fc(moy)}</td>
+        <td class="tc-red">${fc(tD)}</td>
+        <td class="fw7 ${net>=0?'tc-green':'tc-red'}">${fc(net)}</td>
+        <td><div class="flex ai gap8"><div class="prog" style="width:76px"><div class="prog-bar" style="width:${score}%;background:${sc}"></div></div><span class="fs13 fw6" style="color:${sc}">${score}</span></div></td>
+      </tr>`;
+    }).join('')}
+    </tbody></table></div>
+  </div>`);
+}
+
+/* ── ALERTS ── */
+function pgAlerts(){
+  const unread=DB.alerts.filter(a=>!a.read);
+  inj(`
+  <div class="flex ai jb mb20 fw gap10">
+    <div class="flex gap10 ai">
+      <select class="inp" style="width:160px" onchange="filterAlerts(this.value)">
+        <option value="">Tous types</option><option value="red">Critique</option><option value="amber">Avertissement</option><option value="green">Succès</option><option value="blue">Info</option>
+      </select>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="markAllRead()">✓ Tout marquer lu</button>
+  </div>
+  ${stats4([
+    {i:'🔔',v:unread.length,l:'Non lues',c:'var(--red)',bg:'rgba(239,69,69,.08)'},
+    {i:'🚨',v:DB.alerts.filter(a=>a.type==='red').length,l:'Critiques',c:'var(--red)',bg:'rgba(239,69,69,.08)'},
+    {i:'⚠️',v:DB.alerts.filter(a=>a.type==='amber').length,l:'Avertissements',c:'var(--amber)',bg:'rgba(245,166,35,.08)'},
+    {i:'ℹ️',v:DB.alerts.filter(a=>a.type==='blue').length,l:'Informations',c:'var(--blue-light)',bg:'rgba(59,107,204,.08)'},
+  ])}
+  <div class="card mb20">
+    <div class="card-head"><span class="card-title">🔔 Centre d'alertes</span></div>
+    <div class="card-body flex fc gap10" id="alerts-list">${alertsList(DB.alerts)}</div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span class="card-title">⚙️ Configurer les alertes automatiques</span></div>
+    <div class="card-body"><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:11px">
+    ${[['Versement en retard','Notifier après X jours sans versement',true],['Maintenance dépassée','Km ou date dépassés',true],['Assurance expire','Alerte 30 jours avant',true],['Chauffeur inactif','Plus de 2 jours sans activité',false],['Solde bas propriétaire','En dessous du seuil défini',true],['Objectif mensuel','Suivi des objectifs',false]].map(([l,d,c])=>`
+    <label style="display:flex;align-items:center;gap:11px;background:var(--bg-card2);padding:13px;border-radius:var(--r-md);cursor:pointer;border:1px solid var(--border)">
+      <input type="checkbox" ${c?'checked':''} style="accent-color:var(--blue);width:15px;height:15px">
+      <div><div class="fw6 fs13">${l}</div><div class="c3 fs12">${d}</div></div>
+    </label>`).join('')}
+    </div></div>
+  </div>`);
+}
+function alertsList(list){
+  if(!list.length)return'<div class="empty"><div class="empty-ico">🔔</div><div class="c2 fw6">Aucune alerte</div></div>';
+  return list.map(a=>`
+  <div class="alert al-${a.type==='red'?'red':a.type==='amber'?'amber':a.type==='green'?'green':'blue'}" style="${a.read?'opacity:.5':''}">
+    <span style="font-size:17px">${a.icon}</span>
+    <div style="flex:1"><div class="flex ai jb mb4"><span class="fw6">${a.title}</span><span class="fs11 c3">${a.time}</span></div><div class="fs13">${a.msg}</div></div>
+    <div class="flex gap6 ai">
+      ${!a.read?'<span class="dot dot-r" style="flex-shrink:0"></span>':''}
+      <button class="btn btn-ghost btn-sm" onclick="resolveAlert('${a.id}')">Traiter</button>
+    </div>
+  </div>`).join('');
+}
+function filterAlerts(t){const l=$('alerts-list');if(l)l.innerHTML=alertsList(t?DB.alerts.filter(a=>a.type===t):DB.alerts)}
+function markAllRead(){DB.alerts.forEach(a=>a.read=true);toast('Toutes les alertes marquées comme lues','success');pgAlerts()}
+function resolveAlert(id){const a=DB.alerts.find(x=>x.id===id);if(a){a.read=true;toast('Alerte traitée','success');pgAlerts()}}
+
+/* ── RAPPORTS ── */
+function pgRapports(){
+  inj(`
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:20px">
+    ${[['📅','Rapport journalier',"Aujourd'hui"],['📆','Rapport hebdomadaire','Cette semaine'],['🗓','Rapport mensuel','Janvier 2024'],['📊','Rapport annuel','Année 2024']].map(([i,l,d])=>`
+    <div class="card card-accent" style="cursor:pointer" onclick="genReport('${l}')">
+      <div class="card-body" style="text-align:center;padding:24px">
+        <div style="font-size:34px;margin-bottom:11px">${i}</div>
+        <div class="fw6 mb4">${l}</div><div class="c3 fs13 mb16">${d}</div>
+        <button class="btn btn-primary btn-sm btn-block">Générer</button>
+      </div>
+    </div>`).join('')}
+  </div>
+  <div class="card">
+    <div class="card-head"><span class="card-title">📋 Rapport personnalisé</span></div>
+    <div class="card-body">
+      <div class="form-row mb16">
+        <div class="fg"><label class="lbl">Date de début</label><input type="date" class="inp" value="2024-01-01"></div>
+        <div class="fg"><label class="lbl">Date de fin</label><input type="date" class="inp" value="2024-01-31"></div>
+      </div>
+      <div class="form-row mb16">
+        <div class="fg"><label class="lbl">Propriétaire</label><select class="inp"><option>Tous les propriétaires</option>${DB.owners.map(o=>`<option>${o.name}</option>`).join('')}</select></div>
+        <div class="fg"><label class="lbl">Véhicule</label><select class="inp"><option>Tous les véhicules</option>${DB.vehicles.map(v=>`<option>${v.plate}</option>`).join('')}</select></div>
+      </div>
+      <div class="fg mb16">
+        <label class="lbl">Données à inclure</label>
+        <div class="flex gap16 fw mt8">
+          ${['Versements','Dépenses','Kilométrage','Performance chauffeurs','Alertes','Graphiques'].map(o=>`<label class="flex ai gap8 fs13" style="cursor:pointer"><input type="checkbox" checked style="accent-color:var(--blue)"> ${o}</label>`).join('')}
+        </div>
+      </div>
+      <div class="flex gap10 fw">
+        <button class="btn btn-primary" onclick="genReport('Rapport personnalisé')">Générer le rapport</button>
+        <button class="btn btn-ghost" onclick="toast('Export PDF en cours…','info')">📥 PDF</button>
+        <button class="btn btn-ghost" onclick="toast('Export Excel en cours…','info')">📊 Excel</button>
+      </div>
+    </div>
+  </div>`);
+}
+function genReport(type){toast(`Génération : ${type}…`,'info',1500);setTimeout(()=>toast(`${type} généré ✓ Téléchargement…`,'success'),1600)}
+
+/* ── ACCES ── */
+function pgAcces(){
+  inj(`
+  <div class="flex ai jb mb20">
+    <p class="c2 fs13">Gérez les accès des propriétaires à leur espace personnel</p>
+    <button class="btn btn-primary" onclick="modalCreateAccess()">+ Créer un accès</button>
+  </div>
+  <div class="card mb20">
+    <div class="card-head"><span class="card-title">👥 Propriétaires — Comptes d'accès</span></div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Propriétaire</th><th>Email</th><th>Téléphone</th><th>Véhicules</th><th>Statut</th><th>Mot de passe</th><th>Actions</th></tr></thead><tbody>
+    ${DB.owners.map(o=>`<tr>
+      <td><div class="flex ai gap10"><div class="av" style="background:${avCol(o.name)};width:32px;height:32px;font-size:12px">${ini(o.name)}</div><div><div class="fw6">${o.name}</div><div class="c3 fs12">Depuis ${fd(o.joined)}</div></div></div></td>
+      <td>${o.email}</td><td class="mono fs12">${o.phone}</td>
+      <td><span class="badge b-blue">${o.vehicles} véh.</span></td>
+      <td>${badge(o.status)}</td>
+      <td><span class="mono fs12 b-gray badge">${o.pass}</span></td>
+      <td><div class="flex gap6">
+        <button class="btn btn-primary btn-sm" onclick="sendAccess('${o.id}')">📱 Envoyer</button>
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="resetPass('${o.id}')" title="Reset mdp">🔑</button>
+      </div></td>
+    </tr>`).join('')}
+    </tbody></table></div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span class="card-title">📋 Journal d'audit</span></div>
+    <div class="card-body"><div class="timeline">
+      ${DB.audit.map(e=>`<div class="tl-item"><div class="tl-dot"></div><div class="tl-time">${e.time}</div><div class="tl-txt"><strong>${e.action}</strong> — ${e.user}<div class="c3 fs12 mt4">${e.detail}</div></div></div>`).join('')}
+    </div></div>
+  </div>`);
+}
+function sendAccess(id){const o=own(id);if(o)toast(`Accès envoyé à ${o.name} par SMS et WhatsApp ✓`,'success')}
+function resetPass(id){const o=DB.owners.find(x=>x.id===id);if(!o)return;o.pass=Math.random().toString(36).slice(-7).toUpperCase();toast(`Mot de passe réinitialisé pour ${o.name}`,'success');pgAcces()}
+function modalCreateAccess(){
+  openModal('🔐 Créer un accès propriétaire',`
+  <div class="alert al-blue mb16">Les identifiants seront envoyés automatiquement par SMS et WhatsApp.</div>
+  <div class="form-row"><div class="fg"><label class="lbl">Prénom *</label><input type="text" class="inp" id="ca-prenom"></div><div class="fg"><label class="lbl">Nom *</label><input type="text" class="inp" id="ca-nom"></div></div>
+  <div class="fg"><label class="lbl">Téléphone *</label><input type="tel" class="inp" id="ca-tel" placeholder="+221 77 000 0000"></div>
+  <div class="fg"><label class="lbl">Email *</label><input type="email" class="inp" id="ca-email" placeholder="proprietaire@email.com"></div>
+  <div class="fg"><label class="lbl">Mot de passe généré</label>
+    <div class="flex gap8"><input type="text" class="inp mono fw6" id="ca-pass" value="${Math.random().toString(36).slice(-8).toUpperCase()}" readonly style="flex:1">
+    <button class="btn btn-ghost btn-sm" onclick="$('ca-pass').value=Math.random().toString(36).slice(-8).toUpperCase()">🔄</button></div>
+  </div>`,
+  `<button class="btn btn-ghost" onclick="closeModal()">Annuler</button><button class="btn btn-primary" onclick="saveNewAccess()">Créer et envoyer</button>`);
+}
+function saveNewAccess(){
+  const p=($('ca-prenom')||{value:''}).value.trim(),n=($('ca-nom')||{value:''}).value.trim(),t=($('ca-tel')||{value:''}).value.trim(),e=($('ca-email')||{value:''}).value.trim();
+  if(!p||!n||!t||!e){toast('Remplissez tous les champs','error');return}
+  const name=`${p} ${n}`;
+  const no={id:'O'+(DB.owners.length+1).toString().padStart(3,'0'),name,phone:t,email:e,vehicles:0,status:'active',balance:0,joined:new Date().toISOString().slice(0,10),pass:($('ca-pass')||{value:'PASS1234'}).value};
+  DB.owners.push(no);closeModal();toast(`Accès créé pour ${name} et envoyé par SMS + WhatsApp ✓`,'success');pgAcces();
+}
+
+/* ── OWNER PORTAL ── */
+function pgOwner(){
+  const o=DB.owners[0];
+  const myVehs=DB.vehicles.filter(v=>v.owner===o.id);
+  const myVers=DB.versements.filter(vs=>myVehs.some(v=>v.id===vs.vid));
+  const tV=myVers.filter(vs=>vs.status==='paid').reduce((s,vs)=>s+vs.amount,0);
+  const pend=myVers.filter(vs=>vs.status==='pending').length;
+  const over=myVers.filter(vs=>vs.status==='overdue').length;
+  inj(`
+  <div class="card card-accent mb20">
+    <div class="card-body" style="padding:22px">
+      <div class="flex ai gap16 fw">
+        <div class="av" style="width:58px;height:58px;font-size:22px;background:linear-gradient(135deg,var(--blue),var(--cyan))">${ini(o.name)}</div>
+        <div style="flex:1">
+          <div class="fs18 fw8">${o.name}</div>
+          <div class="c2 fs13">${o.email} · ${o.phone}</div>
+          <div class="c3 fs12">Membre depuis ${fd(o.joined)}</div>
+        </div>
+        <div class="flex gap20">
+          <div style="text-align:center"><div class="fs22 fw8 tc-cyan">${myVehs.length}</div><div class="c3 fs12">Véhicules</div></div>
+          <div style="text-align:center"><div class="fs22 fw8 tc-green">${fc(o.balance)}</div><div class="c3 fs12">Solde</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  ${stats4([
+    {i:'💰',v:`${(tV/1000).toFixed(0)}k`,l:'Total reçu (FCFA)',c:'var(--green)',bg:'rgba(16,201,122,.08)',t:'↑ +8%'},
+    {i:'⏳',v:pend,l:'En attente',c:'var(--amber)',bg:'rgba(245,166,35,.08)'},
+    {i:'⚠',v:over,l:'En retard',c:'var(--red)',bg:'rgba(239,69,69,.08)'},
+    {i:'🚗',v:myVehs.filter(v=>v.status==='active').length,l:'Véhicules actifs',c:'var(--cyan)',bg:'rgba(0,212,255,.08)'},
+  ])}
+  <div class="sec-title">Mes véhicules</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:20px">
+    ${myVehs.map(v=>{const d=v.driver?drv(v.driver):null;return`<div class="v-card">
+      <div class="v-img">${emo(v.brand)}<div style="position:absolute;top:10px;right:10px">${badge(v.status)}</div></div>
+      <div class="v-info">
+        <div class="v-plate">${v.plate}</div>
+        <div class="fw6 mb4">${v.brand} ${v.model} <span class="c3 fw5">${v.year}</span></div>
+        <div class="divider"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;font-size:12.5px">
+          <div><span class="c3">Chauffeur</span><br>${d?d.name:'<em class="c3">Non assigné</em>'}</div>
+          <div><span class="c3">Revenus</span><br><span class="tc-cyan fw6">${(v.earnings/1000).toFixed(0)}k FCFA</span></div>
+        </div>
+      </div>
+    </div>`;}).join('')}
+  </div>
+  <div class="card">
+    <div class="card-head"><span class="card-title">📊 Mes versements</span></div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Véhicule</th><th>Montant</th><th>Méthode</th><th>Statut</th></tr></thead><tbody>
+    ${myVers.slice(0,10).map(vs=>{const v=myVehs.find(x=>x.id===vs.vid);return`<tr><td>${fd(vs.date)}</td><td><span class="mono fs12">${v?.plate||'—'}</span></td><td class="fw6 tc-cyan">${fc(vs.amount)}</td><td><span class="badge b-gray">${vs.method}</span></td><td>${badge(vs.status)}</td></tr>`}).join('')}
+    </tbody></table></div>
+  </div>`);
+}
+
+/* ── CHATBOT ── */
+const botReplies={
+  bilan:`Ce mois, votre flotte a généré <strong>${fc(DB.versements.filter(v=>v.status==='paid').reduce((s,v)=>s+v.amount,0))}</strong> en versements, avec un taux de collecte de 89%. Dépenses : ${fc(DB.depenses.reduce((s,d)=>s+d.amount,0))}. Bénéfice net : environ 244 500 FCFA. 💹`,
+  retard:`<strong>${DB.versements.filter(v=>v.status==='overdue').length} versement(s) en retard :</strong><br>${DB.versements.filter(v=>v.status==='overdue').map(v=>`• ${veh(v.vid)?.plate} — ${drv(v.did)?.name} — ${fc(v.amount)}`).join('<br>')}`,
+  maintenance:`<strong>Véhicules nécessitant attention :</strong><br>${DB.vehicles.filter(v=>v.status==='maintenance'||v.status==='inactive').map(v=>`• ${v.plate} — ${badge(v.status)}`).join('<br>')}`,
+  top:`🏆 Top chauffeur : <strong>${[...DB.drivers].sort((a,b)=>b.earnings-a.earnings)[0]?.name}</strong> avec ${fc([...DB.drivers].sort((a,b)=>b.earnings-a.earnings)[0]?.earnings||0)} et une note de ${[...DB.drivers].sort((a,b)=>b.earnings-a.earnings)[0]?.rating}⭐`,
+  assurance:`Assurances proches de l'expiration :<br>${DB.vehicles.map(v=>`• ${v.plate} — expire le ${v.insurance||'N/A'}`).join('<br>')}`,
+  default:`Je suis votre assistant IA FLOTTE 2.0. Posez-moi des questions sur vos versements, véhicules, chauffeurs, dépenses ou performances. Je suis là pour vous aider ! 🤖`,
+};
+function pgChatbot(){
+  inj(`
+  <div class="g2" style="gap:16px;min-height:500px">
+    <div class="chat-win">
+      <div style="background:linear-gradient(135deg,var(--bg-hover),var(--bg-card2));padding:14px;border-bottom:1px solid var(--border)">
+        <div class="flex ai gap12">
+          <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:18px">🤖</div>
+          <div><div class="fw6">Assistant FLOTTE 2.0</div><div class="c2 fs12 flex ai gap6"><span class="dot dot-g"></span>En ligne</div></div>
+        </div>
+      </div>
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="chat-msg bot">
+          <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">🤖</div>
+          <div class="bubble">Bonjour ! Je suis votre assistant IA FLOTTE 2.0.<br>Je peux analyser vos données, générer des rapports et répondre à vos questions. Comment puis-je vous aider ?</div>
+        </div>
+      </div>
+      <div class="chat-in">
+        <input type="text" class="chat-inp" id="chat-inp" placeholder="Posez votre question…" onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="btn btn-primary btn-icon" onclick="sendChat()">➤</button>
+      </div>
+    </div>
+    <div class="flex fc gap12">
+      <div class="card">
+        <div class="card-head"><span class="card-title">⚡ Questions rapides</span></div>
+        <div class="card-body flex fc gap8">
+          ${['Quel est le bilan de la flotte ?','Quels chauffeurs ont des retards ?','Véhicules en maintenance ?','Mon top chauffeur ?','Assurances qui expirent ?','Analyse mes dépenses','Génère un rapport de performance'].map(q=>`<button class="btn btn-ghost btn-sm" style="text-align:left;justify-content:flex-start" onclick="askBot('${q}')">${q}</button>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">💡 Insights du jour</span></div>
+        <div class="card-body flex fc gap10">
+          <div class="alert al-amber"><span style="font-size:16px">⚠️</span><div><strong>Attention :</strong> 1 versement en retard depuis 5 jours.</div></div>
+          <div class="alert al-blue"><span style="font-size:16px">💡</span><div><strong>Conseil :</strong> Vos revenus de janvier sont en hausse de 12%. Excellent !</div></div>
+          <div class="alert al-red"><span style="font-size:16px">📋</span><div><strong>Rappel :</strong> DK-8901-KL — assurance expire dans 15 jours.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>`);
+}
+function sendChat(){
+  const inp=$('chat-inp');if(!inp)return;
+  const msg=inp.value.trim();if(!msg)return;
+  inp.value='';
+  addChatMsg(msg,'user');
+  setTimeout(()=>{
+    const low=msg.toLowerCase();
+    let rep=botReplies.default;
+    if(low.includes('bilan')||low.includes('revenu'))rep=botReplies.bilan;
+    else if(low.includes('retard')||low.includes('versement'))rep=botReplies.retard;
+    else if(low.includes('maintenance')||low.includes('répar'))rep=botReplies.maintenance;
+    else if(low.includes('top')||low.includes('meilleur'))rep=botReplies.top;
+    else if(low.includes('assurance')||low.includes('expir'))rep=botReplies.assurance;
+    addChatMsg(rep,'bot');
+  },600);
+}
+function askBot(q){const inp=$('chat-inp');if(inp)inp.value=q;sendChat()}
+function addChatMsg(text,role){
+  const msgs=$('chat-msgs');if(!msgs)return;
+  const d=document.createElement('div');d.className=`chat-msg ${role}`;
+  d.innerHTML=role==='bot'?`<div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0">🤖</div><div class="bubble">${text}</div>`:`<div class="bubble">${text}</div>`;
+  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+}
+
+/* ── PARAMETRES ── */
+function pgParametres(){
+  inj(`
+  <div class="g2 gap16">
+    <div class="flex fc gap16">
+      <div class="card">
+        <div class="card-head"><span class="card-title">👤 Profil administrateur</span></div>
+        <div class="card-body">
+          <div class="flex fc ai mb24" style="text-align:center">
+            <div class="av" style="width:68px;height:68px;font-size:24px;background:linear-gradient(135deg,var(--blue),var(--cyan));margin-bottom:10px">NG</div>
+            <div class="fw6 fs16">Admin FLOTTE 2.0</div>
+            <div class="c2 fs13">admin@ngary.com · Super Admin</div>
+          </div>
+          <div class="fg"><label class="lbl">Nom complet</label><input type="text" class="inp" value="Admin FLOTTE 2.0"></div>
+          <div class="fg"><label class="lbl">Email</label><input type="email" class="inp" value="admin@ngary.com"></div>
+          <div class="fg"><label class="lbl">Téléphone</label><input type="tel" class="inp" value="+221 77 000 0000"></div>
+          <button class="btn btn-primary btn-block" onclick="toast('Profil sauvegardé ✓','success')">Sauvegarder les modifications</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">🔒 Sécurité</span></div>
+        <div class="card-body">
+          <div class="fg"><label class="lbl">Mot de passe actuel</label><input type="password" class="inp" placeholder="••••••••"></div>
+          <div class="fg"><label class="lbl">Nouveau mot de passe</label><input type="password" class="inp" placeholder="••••••••"></div>
+          <div class="fg"><label class="lbl">Confirmer le nouveau</label><input type="password" class="inp" placeholder="••••••••"></div>
+          <button class="btn btn-primary btn-block" onclick="toast('Mot de passe modifié ✓','success')">Changer le mot de passe</button>
+        </div>
+      </div>
+    </div>
+    <div class="flex fc gap16">
+      <div class="card">
+        <div class="card-head"><span class="card-title">⚙️ Préférences</span></div>
+        <div class="card-body flex fc gap12">
+          ${[['Notifications SMS','Alertes versements par SMS',true],['Notifications WhatsApp','Résumé quotidien sur WhatsApp',true],['Rapports automatiques','Rapport hebdomadaire chaque lundi',false],['Mode sombre','Interface sombre (actif)',true],['Affichage FCFA','Devise Franc CFA',true]].map(([l,d,c])=>`
+          <div class="flex ai jb p12" style="background:var(--bg-card2);border-radius:var(--r-md)">
+            <div><div class="fw5 fs13">${l}</div><div class="c3 fs12">${d}</div></div>
+            <label class="toggle-wrap">
+              <input type="checkbox" class="toggle-inp" ${c?'checked':''} onchange="toast(this.checked?'${l} activé':'${l} désactivé','info')">
+              <span class="toggle-track"></span><span class="toggle-thumb"></span>
+            </label>
+          </div>`).join('')}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">📱 Informations système</span></div>
+        <div class="card-body">
+          ${[['Version','FLOTTE 2.0.0'],['Domaine','ngary.com'],['Plateforme','Web · Statique'],['Déploiement','Netlify / Vercel'],['Base de données','En mémoire (demo)'],['Dernière mise à jour','15 Jan 2024']].map(([l,v])=>`<div class="flex ai jb fs13" style="padding:7px 0;border-bottom:1px solid var(--border)"><span class="c3">${l}</span><span class="fw5">${v}</span></div>`).join('')}
+          <button class="btn btn-danger btn-sm mt12 btn-block" onclick="doLogout()">🚪 Déconnexion</button>
+        </div>
+      </div>
+    </div>
+  </div>`);
+}
+
+/* ── AUTH ── */
+function doLogin(){
+  const email=($('l-email')||{value:''}).value.trim();
+  const pass=($('l-pass')||{value:''}).value.trim();
+  if(!email||!pass){toast('Remplissez tous les champs','error');return}
+  toast('Connexion en cours…','info',900);
+  setTimeout(()=>{
+    $('auth-screen').classList.add('hidden');
+    $('app-screen').classList.remove('hidden');
+    buildNav();
+    showPage('dashboard');
+    if(window.innerWidth<=900)$('mob-menu').style.display='flex';
+    toast('Connexion réussie ! Bienvenue 👋','success');
+  },800);
+}
+function doLogout(){
+  $('app-screen').classList.add('hidden');
+  $('auth-screen').classList.remove('hidden');
+  Object.values(chartInst).forEach(c=>{try{c.destroy()}catch(e){}});
+  for(const k in chartInst)delete chartInst[k];
+  toast('Déconnexion réussie','info');
+}
+
+/* ── START ── */
+document.addEventListener('DOMContentLoaded',()=>{
+  // Enter key on login
+  document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!$('app-screen').classList.contains('hidden')===false)doLogin()});
+  // Mobile sidebar close on outside click
+  document.addEventListener('click',e=>{
+    const sb=$('sidebar');
+    if(sb&&sb.classList.contains('mob-open')&&!sb.contains(e.target)&&e.target.id!=='mob-menu')
+      sb.classList.remove('mob-open');
+  });
+});
+</script>
+</body>
+</html>
